@@ -90,7 +90,16 @@ func (t *Timesheet) AddEntry(hours, minutes uint8, comment, task string, categor
 }
 
 func (t *Timesheet) PotentialTotalTime() uint8 {
-	return 0
+	var total uint8 = uint8(0)
+	for _, entry := range t.Entries {
+		if !entry.IsHoliday() {
+			total += entry.(*TimesheetEntry).Hours
+		} else {
+			return 8
+		}
+	}
+	return total
+
 }
 
 func (t *Timesheet) PotentialWorkingTime() uint8 {

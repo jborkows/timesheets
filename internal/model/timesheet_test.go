@@ -59,3 +59,21 @@ func TestShouldBePossibleToAddHolidayToSameTimesheet(t *testing.T) {
 	error = timesheet.AddHoliday(holiday)
 	assert.Nil(t, error)
 }
+
+func TestIfOneHolidayThenTimesheetShouldBeSpecific(t *testing.T) {
+	t.Parallel()
+	holiday, error := model.NewHoliday("2021-01-01")
+	if error != nil {
+		t.Errorf("Error creating holiday: %v", error)
+	}
+	timesheet, error := model.NewTimesheet("2021-01-01")
+	if error != nil {
+		t.Errorf("Error creating timesheet: %v", error)
+	}
+	error = timesheet.AddHoliday(holiday)
+	if error != nil {
+		t.Errorf("Error adding holiday: %v", error)
+	}
+	assert.Equal(t, uint8(0), timesheet.PotentialWorkingTime())
+	assert.Equal(t, uint8(8), timesheet.PotentialTotalTime())
+}
