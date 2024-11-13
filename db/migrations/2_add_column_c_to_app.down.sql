@@ -1,0 +1,10 @@
+CREATE TABLE app_new (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    a TEXT NOT NULL,
+    b TEXT NOT NULL
+);
+
+INSERT INTO app_new (id, a, b) SELECT id, a, b FROM app;
+
+DROP TABLE app;
+ALTER TABLE app_new RENAME TO app;
