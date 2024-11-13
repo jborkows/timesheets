@@ -28,12 +28,27 @@ type Timesheet struct {
 	Entries []WorkItem
 }
 
+func NewHoliday(date string) (*Holiday, error) {
+	if err := validateDate(date); err != nil {
+		return nil, fmt.Errorf("invalid date: %w", err)
+	}
+	return &Holiday{Date: date}, nil
+}
+
 func (h *Holiday) IsHoliday() bool {
 	return true
 }
 
 func (t *TimesheetEntry) IsHoliday() bool {
 	return false
+}
+
+func (t *Timesheet) AddHoliday(holiday *Holiday) error {
+	if holiday.Date != t.Date {
+		return fmt.Errorf("holiday date %v does not match timesheet date %v", holiday.Date, t.Date)
+	}
+	t.Entries = append(t.Entries, holiday)
+	return nil
 }
 
 type ValidateDateError struct {
@@ -62,10 +77,6 @@ func NewTimesheet(date string) (*Timesheet, error) {
 
 func (t *Timesheet) Clear() {
 	t.Entries = nil
-}
-
-func (t *Timesheet) AddHoliday() {
-	t.Entries = append(t.Entries, &Holiday{})
 }
 
 func (t *Timesheet) AddEntry(hours, minutes uint8, comment, task string, category CategoryType) {

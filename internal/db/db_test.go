@@ -43,6 +43,9 @@ func runMigrations(db *sql.DB) error {
 }
 
 func TestConnectionString(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
 	tempFile, err := os.CreateTemp("", "example-*.txt")
 	if err != nil {
 		t.Fatalf("failed to create temp file: %v", err)
