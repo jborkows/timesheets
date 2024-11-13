@@ -1,4 +1,4 @@
-.PHONY: run tests tests-json failed-tests create_test_project migrate
+.PHONY: run tests tests-json failed-tests create_test_project migrate short-tests short-tests-details
 
 run:
 	@air -c ./config/air.toml 
@@ -7,6 +7,13 @@ build:
 tests: 
 	@echo "Running tests..."
 	@go test ./... -v -race -shuffle=on 
+	
+short-tests-details: 
+	@echo "Running tests..."
+	@go test ./... -v -race -shuffle=on -short
+short-tests: 
+	@echo "Running tests..."
+	@go test ./... -race -shuffle=on -short
 tests-json: 
 	@echo "Running tests..."
 	@go test ./... -v -race -shuffle=on -json 
