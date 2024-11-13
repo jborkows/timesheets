@@ -1,5 +1,10 @@
 package model
 
+import (
+	"fmt"
+	"time"
+)
+
 type CategoryType = string
 
 type WorkItem interface {
@@ -7,6 +12,7 @@ type WorkItem interface {
 }
 
 type Holiday struct {
+	Date string
 }
 
 type TimesheetEntry struct {
@@ -30,8 +36,28 @@ func (t *TimesheetEntry) IsHoliday() bool {
 	return false
 }
 
-func NewTimesheet(date string) *Timesheet {
-	return &Timesheet{Date: date}
+type ValidateDateError struct {
+	Date string
+	Err  error
+}
+
+func (e *ValidateDateError) Error() string {
+	return fmt.Sprintf("invalid date: %v", e.Err)
+}
+
+func validateDate(date string) error {
+	_, error := time.Parse("2006-01-02", date)
+	if error != nil {
+		return &ValidateDateError{Date: date, Err: error}
+	}
+	return nil
+}
+
+func NewTimesheet(date string) (*Timesheet, error) {
+	if err := validateDate(date); err != nil {
+		return nil, fmt.Errorf("invalid date: %w", err)
+	}
+	return &Timesheet{Date: date}, nil
 }
 
 func (t *Timesheet) Clear() {
