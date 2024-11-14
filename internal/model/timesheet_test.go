@@ -76,4 +76,106 @@ func TestIfOneHolidayThenTimesheetShouldBeSpecific(t *testing.T) {
 	}
 	assert.Equal(t, uint8(0), timesheet.PotentialWorkingTime())
 	assert.Equal(t, uint8(8), timesheet.PotentialTotalTime())
+	assert.Equal(t, float32(0), timesheet.WorkingTime())
+}
+
+func aTimesheet() *model.Timesheet {
+	timesheet, error := model.NewTimesheet("2021-01-01")
+	if error != nil {
+		panic("Error creating timesheet")
+	}
+	return timesheet
+}
+
+func aTimeSheetEntry() model.TimesheetEntry {
+	task := "work"
+	return model.TimesheetEntry{Hours: 8, Minutes: 0, Category: "work", Comment: "work", Task: &task}
+}
+
+func TestShouldNotAllowCreatingEntryWithNotCorrectHours(t *testing.T) {
+	t.Parallel()
+	entry := aTimeSheetEntry()
+	entry.Hours = 25
+	err := aTimesheet().AddEntry(entry)
+
+	var invalidEntry *model.InvalidTimesheetEntry
+	if errors.As(err, &invalidEntry) {
+	} else {
+		t.Errorf("Expected error to be of type InvaliedTimesheetEntry, got %v", err)
+	}
+}
+
+func TestShouldNotAllowCreatingEntryWithNotCorrectMinutes(t *testing.T) {
+	t.Parallel()
+	entry := aTimeSheetEntry()
+	entry.Minutes = 61
+	err := aTimesheet().AddEntry(entry)
+
+	var invalidEntry *model.InvalidTimesheetEntry
+	if errors.As(err, &invalidEntry) {
+	} else {
+		t.Errorf("Expected error to be of type InvaliedTimesheetEntry, got %v", err)
+	}
+}
+
+func TestShouldNotAllowAddingTimesheetWithBothHoursAndMinutesEmpty(t *testing.T) {
+	t.Parallel()
+	entry := aTimeSheetEntry()
+	entry.Minutes = 0
+	entry.Hours = 0
+	err := aTimesheet().AddEntry(entry)
+
+	var invalidEntry *model.InvalidTimesheetEntry
+	if errors.As(err, &invalidEntry) {
+	} else {
+		t.Errorf("Expected error to be of type InvaliedTimesheetEntry, got %v", err)
+	}
+}
+
+func TestShouldAllowItemWithoutTask(t *testing.T) {
+	t.Parallel()
+	entry := aTimeSheetEntry()
+	entry.Task = nil
+	err := aTimesheet().AddEntry(entry)
+	assert.Nil(t, err)
+}
+
+func TestShouldSumUpAllEntries(t *testing.T) {
+	timesheet := aTimesheet()
+	entry := aTimeSheetEntry()
+	entry.Hours = 4
+	entry.Minutes = 0
+	err := timesheet.AddEntry(entry)
+	assert.Nil(t, err)
+
+	entry = aTimeSheetEntry()
+	entry.Hours = 2
+	entry.Minutes = 30
+	err = timesheet.AddEntry(entry)
+	assert.Nil(t, err)
+
+	assert.Equal(t, uint8(8), timesheet.PotentialWorkingTime())
+	assert.Equal(t, uint8(8), timesheet.PotentialTotalTime())
+	assert.Equal(t, float32(6.5), timesheet.WorkingTime())
+
+}
+
+func TestShouldAllEntriesCouldSumUpAbove8hours(t *testing.T) {
+	timesheet := aTimesheet()
+	entry := aTimeSheetEntry()
+	entry.Hours = 4
+	entry.Minutes = 0
+	err := timesheet.AddEntry(entry)
+	assert.Nil(t, err)
+
+	entry = aTimeSheetEntry()
+	entry.Hours = 4
+	entry.Minutes = 30
+	err = timesheet.AddEntry(entry)
+	assert.Nil(t, err)
+
+	assert.Equal(t, uint8(8), timesheet.PotentialWorkingTime())
+	assert.Equal(t, uint8(8), timesheet.PotentialTotalTime())
+	assert.Equal(t, float32(8.5), timesheet.WorkingTime())
+
 }

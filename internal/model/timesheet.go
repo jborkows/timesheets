@@ -19,7 +19,7 @@ type TimesheetEntry struct {
 	Hours    uint8
 	Minutes  uint8
 	Comment  string
-	Task     string
+	Task     *string
 	Category CategoryType
 }
 
@@ -60,6 +60,15 @@ func (e *ValidateDateError) Error() string {
 	return fmt.Sprintf("invalid date: %v", e.Err)
 }
 
+type InvalidTimesheetEntry struct {
+	Entry *TimesheetEntry
+	Err   error
+}
+
+func (e *InvalidTimesheetEntry) Error() string {
+	return fmt.Sprintf("invalid entry: %v", e.Err)
+}
+
 func validateDate(date string) error {
 	_, error := time.Parse("2006-01-02", date)
 	if error != nil {
@@ -79,33 +88,51 @@ func (t *Timesheet) Clear() {
 	t.Entries = nil
 }
 
-func (t *Timesheet) AddEntry(hours, minutes uint8, comment, task string, category CategoryType) {
-	t.Entries = append(t.Entries, &TimesheetEntry{
-		Hours:    hours,
-		Minutes:  minutes,
-		Comment:  comment,
-		Task:     task,
-		Category: category,
-	})
+func validate(entry *TimesheetEntry) error {
+	if entry.Hours >= 24 {
+		return &InvalidTimesheetEntry{Entry: entry, Err: fmt.Errorf("hours cannot be more than 24")}
+	}
+	if entry.Minutes >= 60 {
+		return &InvalidTimesheetEntry{Entry: entry, Err: fmt.Errorf("minutes cannot be more than 60")}
+	}
+	if entry.Hours == 0 && entry.Minutes == 0 {
+		return &InvalidTimesheetEntry{Entry: entry, Err: fmt.Errorf("hours and minutes cannot be both 0")}
+	}
+	return nil
+}
+func (t *Timesheet) AddEntry(entry TimesheetEntry) error {
+	if err := validate(&entry); err != nil {
+		return fmt.Errorf("invalid entry: %w", err)
+	}
+	t.Entries = append(t.Entries, &entry)
+	return nil
 }
 
 func (t *Timesheet) PotentialTotalTime() uint8 {
-	var total uint8 = uint8(0)
-	for _, entry := range t.Entries {
-		if !entry.IsHoliday() {
-			total += entry.(*TimesheetEntry).Hours
-		} else {
-			return 8
-		}
-	}
-	return total
-
+	return 8
 }
 
 func (t *Timesheet) PotentialWorkingTime() uint8 {
-	return 0
+	for _, entry := range t.Entries {
+		if entry.IsHoliday() {
+			return 0
+		}
+	}
+	return 8
 }
 
 func (t *Timesheet) WorkingTime() float32 {
-	return 0
+
+	var total float32 = 0
+	for _, entry := range t.Entries {
+		if entry.IsHoliday() {
+			continue
+		}
+		entry, ok := entry.(*TimesheetEntry)
+		if !ok {
+			panic("invalid entry type")
+		}
+		total += float32(entry.Hours) + float32(entry.Minutes)/60
+	}
+	return total
 }
