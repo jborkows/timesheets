@@ -103,7 +103,7 @@ func (analyzer *tokenAnalyzer) resetTemp() {
 }
 
 func invalidTime() error {
-	return &InvalidTime{Err: errors.New("invalid time use 1.5 or 1h30m")}
+	return &InvalidTime{Err: errors.New("invalid time use X.Y or XhYm e.g. 1.5 or 1h30m")}
 }
 
 func (analyzer *tokenAnalyzer) analizeHours(t token) error {
