@@ -124,3 +124,15 @@ func TestShouldParseTextWithDecimalAboveTwoPlaces(t *testing.T) {
 	}
 
 }
+func TestIfTaskCouldNottBeMatchedItBecameComment(t *testing.T) {
+	t.Parallel()
+	parser := workingDayParser()
+	timesheet, err := parser.ParseLine(aDate())("Category 1.5 Txsk-123 description")
+	if err != nil {
+		t.Fatalf("Error parsing line: %v", err)
+	}
+	valued := timesheet.(*model.TimesheetEntry)
+	assert.Nil(t, valued.Task)
+	assert.Equal(t, "Txsk-123 description", valued.Comment)
+
+}
