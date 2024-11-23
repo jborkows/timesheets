@@ -66,14 +66,36 @@ func (analyzer *tokenAnalyzer) analyze(token token) (err error) {
 	} else if analyzer.state == "hours" {
 		return analyzer.analizeHours(token)
 	} else if analyzer.state == "task" {
-		//TODO: implement task
-		aaa := "AAAAAA"
-		analyzer.entry.Task = &aaa
-		return nil
+		return analyzer.analizeTask(token)
+	} else if analyzer.state == "comment" {
+		analyzer.temp = append(analyzer.temp, token)
 	}
 	return nil
-
 }
+
+func (analyzer *tokenAnalyzer) finish() *TimesheetEntry {
+	var commentBuilder strings.Builder
+	for _, t := range analyzer.temp {
+		commentBuilder.WriteString(t.value())
+	}
+	analyzer.entry.Comment = strings.TrimSpace(commentBuilder.String())
+	return analyzer.entry
+}
+
+func (analyzer *tokenAnalyzer) analizeTask(t token) error {
+	if word, ok := t.(*word); ok {
+		if analyzer.IsTask(word.Value) {
+			analyzer.entry.Task = &word.Value
+		} else {
+			analyzer.temp = append(analyzer.temp, t)
+		}
+	} else {
+		analyzer.temp = append(analyzer.temp, t)
+	}
+	analyzer.state = "comment"
+	return nil
+}
+
 func (analyzer *tokenAnalyzer) analizeCategory(t token) error {
 	if _, ok := t.(*space); ok {
 		if len(analyzer.temp) == 0 {
@@ -228,8 +250,8 @@ func (parser *Parser) doParseLine(line string) (WorkItem, error) {
 		}
 
 	}
+	return analyzer.finish(), nil
 
-	return analyzer.entry, nil
 }
 
 func parseNumber(temp []rune) uint64 {
