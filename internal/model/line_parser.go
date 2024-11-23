@@ -3,6 +3,7 @@ package model
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 )
@@ -41,12 +42,13 @@ func doParseLine(line string) (WorkItem, error) {
 	if trimmedLine == "" {
 		return nil, &EmptyLine{Err: errors.New("empty line")}
 	}
+	var debugMessage strings.Builder
 	tokens := tokenize(trimmedLine)
 	for _, t := range tokens {
-		fmt.Print(t.represent())
-		fmt.Print(",")
+		debugMessage.WriteString(t.represent())
+		debugMessage.WriteString(",")
 	}
-	fmt.Println()
+	log.Println(debugMessage.String())
 	return nil, errors.New("not implemented")
 }
 
