@@ -54,7 +54,7 @@ func TestShouldParseTextWithDecimalTime(t *testing.T) {
 	t.Parallel()
 
 	parser := workingDayParser()
-	timesheet, err := parser.ParseLine(aDate())("Category 1.5h Task-123 description")
+	timesheet, err := parser.ParseLine(aDate())("Category 1.5 Task-123 description")
 	if err != nil {
 		t.Fatalf("Error parsing line: %v", err)
 	}
@@ -62,10 +62,38 @@ func TestShouldParseTextWithDecimalTime(t *testing.T) {
 	assert.False(t, timesheet.IsHoliday())
 	assert.IsTypef(t, &model.TimesheetEntry{}, timesheet, "Expected type to be TimesheetEntry, got %T", timesheet)
 	valued := timesheet.(*model.TimesheetEntry)
+	assert.Equal(t, "Category", valued.Category)
 	assert.Equal(t, uint8(1), valued.Hours)
 	assert.Equal(t, uint8(30), valued.Minutes)
-	assert.Equal(t, "description", valued.Comment)
-	assert.Equal(t, "Category", valued.Category)
 	assert.Equal(t, "Task-123", *valued.Task)
+	assert.Equal(t, "description", valued.Comment)
+
+}
+func TestShouldParseTextWithDecimalTwoPlacesTime(t *testing.T) {
+	t.Parallel()
+
+	parser := workingDayParser()
+	timesheet, err := parser.ParseLine(aDate())("Category 1.75 Task-123 description")
+	if err != nil {
+		t.Fatalf("Error parsing line: %v", err)
+	}
+	assert.NotNil(t, timesheet)
+	assert.False(t, timesheet.IsHoliday())
+	valued := timesheet.(*model.TimesheetEntry)
+	assert.Equal(t, uint8(1), valued.Hours)
+	assert.Equal(t, uint8(45), valued.Minutes)
+
+}
+func TestShouldParseTextWithDecimalAboveTwoPlaces(t *testing.T) {
+	t.Parallel()
+
+	parser := workingDayParser()
+	_, err := parser.ParseLine(aDate())("Category 1.753 Task-123 description")
+
+	var error *model.InvalidTime
+	if errors.As(err, &error) {
+	} else {
+		t.Errorf("Expected error to be of type InvalidTime, got %v", err)
+	}
 
 }
