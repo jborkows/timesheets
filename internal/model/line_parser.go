@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"runtime/debug"
 	"strconv"
 	"strings"
 )
@@ -125,6 +126,7 @@ func (analyzer *tokenAnalyzer) resetTemp() {
 }
 
 func invalidTime() error {
+	debug.PrintStack()
 	return &InvalidTime{Err: errors.New("invalid time use X.Y or XhYm e.g. 1.5 or 1h30m")}
 }
 
@@ -146,50 +148,39 @@ func (analyzer *tokenAnalyzer) analizeHours(t token) error {
 				return nil
 			}
 			word, ok := temp[0].(*word)
-			if ok {
-				var timeBuilder strings.Builder
-				for _, leter := range word.Value {
-
-					if leter >= '0' && leter <= '9' {
-						timeBuilder.WriteRune(leter)
-					} else if leter == 'h' {
-						if timeBuilder.Len() == 0 {
-							return invalidTime()
-						}
-						tempValue := parseNumber([]rune(timeBuilder.String()))
-
-						if tempValue >= 24 {
-							return invalidTime()
-						}
-						entry.Hours = uint8(tempValue)
-						timeBuilder.Reset()
-					} else if leter == 'm' {
-						if timeBuilder.Len() == 0 {
-							return invalidTime()
-						}
-						tempValue := parseNumber([]rune(timeBuilder.String()))
-						if tempValue >= 60 {
-							return invalidTime()
-						}
-						entry.Minutes = uint8(tempValue)
-					} else {
-						return invalidTime()
-					}
-					timeBuilder.WriteRune(leter)
-				}
-			}
-
-			var hoursBuilder strings.Builder
-			for _, tt := range temp {
-				hoursBuilder.WriteString(tt.value())
-			}
-			potentialHours := hoursBuilder.String()
-			if _, err := strconv.ParseFloat(potentialHours, 64); err == nil {
-				analyzer.state = "task"
-				analyzer.resetTemp()
-			} else {
+			if !ok {
 				return invalidTime()
 			}
+			var timeBuilder strings.Builder
+			for _, leter := range word.Value {
+
+				if leter >= '0' && leter <= '9' {
+					timeBuilder.WriteRune(leter)
+				} else if leter == 'h' {
+					if timeBuilder.Len() == 0 {
+						return invalidTime()
+					}
+					tempValue := parseNumber([]rune(timeBuilder.String()))
+
+					if tempValue >= uint64(24) {
+						return invalidTime()
+					}
+					entry.Hours = uint8(tempValue)
+					timeBuilder.Reset()
+				} else if leter == 'm' {
+					if timeBuilder.Len() == 0 {
+						return invalidTime()
+					}
+					tempValue := parseNumber([]rune(timeBuilder.String()))
+					if tempValue >= uint64(60) {
+						return invalidTime()
+					}
+					entry.Minutes = uint8(tempValue)
+				} else {
+					return invalidTime()
+				}
+			}
+			analyzer.state = "task"
 			return nil
 		}
 		if len(temp) == 3 {
@@ -255,7 +246,11 @@ func (parser *Parser) doParseLine(line string) (WorkItem, error) {
 }
 
 func parseNumber(temp []rune) uint64 {
-	value, _ := strconv.ParseUint(string(temp), 10, 8)
+	value, err := strconv.ParseUint(string(temp), 10, 64)
+	if err != nil {
+		err := fmt.Errorf("error parsing number %v for %s", err, string(temp))
+		panic(err)
+	}
 	return value
 }
 

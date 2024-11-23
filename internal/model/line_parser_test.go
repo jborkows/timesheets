@@ -84,6 +84,33 @@ func TestShouldParseTextWithDecimalTwoPlacesTime(t *testing.T) {
 	assert.Equal(t, uint8(45), valued.Minutes)
 
 }
+
+func TestShouldAllowSingleHour(t *testing.T) {
+	t.Parallel()
+
+	parser := workingDayParser()
+	timesheet, err := parser.ParseLine(aDate())("Category 1h Task-123 description")
+	if err != nil {
+		t.Fatalf("Error parsing line: %v", err)
+	}
+	valued := timesheet.(*model.TimesheetEntry)
+	assert.Equal(t, uint8(1), valued.Hours)
+	assert.Equal(t, uint8(0), valued.Minutes)
+}
+
+func TestShouldAllowHourWithMinutes(t *testing.T) {
+	t.Parallel()
+
+	parser := workingDayParser()
+	timesheet, err := parser.ParseLine(aDate())("Category 1h30m Task-123 description")
+	if err != nil {
+		t.Fatalf("Error parsing line: %v", err)
+	}
+	valued := timesheet.(*model.TimesheetEntry)
+	assert.Equal(t, uint8(1), valued.Hours)
+	assert.Equal(t, uint8(30), valued.Minutes)
+}
+
 func TestShouldParseTextWithDecimalAboveTwoPlaces(t *testing.T) {
 	t.Parallel()
 
