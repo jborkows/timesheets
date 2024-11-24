@@ -12,7 +12,8 @@ type WorkItem interface {
 }
 
 type Holiday struct {
-	Date string
+	Date        string
+	Description string
 }
 
 type TimesheetEntry struct {
@@ -28,11 +29,8 @@ type Timesheet struct {
 	Entries []WorkItem
 }
 
-func NewHoliday(date string) (*Holiday, error) {
-	if err := validateDate(date); err != nil {
-		return nil, fmt.Errorf("invalid date: %w", err)
-	}
-	return &Holiday{Date: date}, nil
+func NewHoliday(date string, description string) (*Holiday, error) {
+	return &Holiday{Date: date, Description: description}, nil
 }
 
 func (h *Holiday) IsHoliday() bool {

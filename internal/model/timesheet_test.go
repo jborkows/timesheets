@@ -34,7 +34,7 @@ func TestShouldNotBeAbleToCreateTimeSheetOnlyIfIsSomethingElse(t *testing.T) {
 
 func TestShouldNotBePossibleToAddHolidayNotToSameTimesheet(t *testing.T) {
 	t.Parallel()
-	holiday, error := model.NewHoliday("2021-01-01")
+	holiday, error := model.NewHoliday("2021-01-01", "description")
 	if error != nil {
 		t.Errorf("Error creating holiday: %v", error)
 	}
@@ -48,7 +48,7 @@ func TestShouldNotBePossibleToAddHolidayNotToSameTimesheet(t *testing.T) {
 
 func TestShouldBePossibleToAddHolidayToSameTimesheet(t *testing.T) {
 	t.Parallel()
-	holiday, error := model.NewHoliday("2021-01-01")
+	holiday, error := model.NewHoliday("2021-01-01", "description")
 	if error != nil {
 		t.Errorf("Error creating holiday: %v", error)
 	}
@@ -62,7 +62,7 @@ func TestShouldBePossibleToAddHolidayToSameTimesheet(t *testing.T) {
 
 func TestIfOneHolidayThenTimesheetShouldBeSpecific(t *testing.T) {
 	t.Parallel()
-	holiday, error := model.NewHoliday("2021-01-01")
+	holiday, error := model.NewHoliday("2021-01-01", "description")
 	if error != nil {
 		t.Errorf("Error creating holiday: %v", error)
 	}

@@ -48,7 +48,7 @@ type Parser struct {
 func (parser *Parser) ParseLine(dateInfo DateInfo) func(line string) (WorkItem, error) {
 	if parser.HolidayClassifier(&dateInfo) {
 		return func(line string) (WorkItem, error) {
-			return NewHoliday(dateInfo.Value)
+			return NewHoliday(dateInfo.Value, line)
 		}
 	}
 	return parser.doParseLine
