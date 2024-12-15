@@ -72,3 +72,12 @@ func TestIsOvertime(t *testing.T) {
 	assert.True(t, config.IsOvertime("overtimeA"))
 	assert.False(t, config.IsOvertime("categoryA"))
 }
+
+func TestIsTask(t *testing.T) {
+	t.Parallel()
+	config, _ := model.ReadConfig(strings.NewReader(fakingToml))
+	assert.True(t, config.IsTask("task-123"))
+	assert.False(t, config.IsTask("taxk-123"))
+	assert.False(t, config.IsTask("task-12x3"))
+	assert.False(t, config.IsTask("task-abc"))
+}

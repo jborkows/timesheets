@@ -1,8 +1,10 @@
 package model
 
 import (
-	"github.com/BurntSushi/toml"
 	"io"
+	"strings"
+
+	"github.com/BurntSushi/toml"
 )
 
 type categories struct {
@@ -73,4 +75,20 @@ func (config *Config) IsCategory(category string) bool {
 func (config *Config) IsOvertime(category string) bool {
 	return insideOfCategory(category, config.Categories.Overtime)
 
+}
+
+func (config *Config) IsTask(text string) bool {
+	if !(strings.HasPrefix(text, config.Tasks.Prefix)) {
+		return false
+	}
+	if !config.Tasks.OnlyNumbers {
+		return true
+	}
+	for _, r := range text[len(config.Tasks.Prefix):] {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+
+	return true
 }
