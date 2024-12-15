@@ -47,3 +47,25 @@ func (config *Config) IsHoliday(info *DateInfo) bool {
 	}
 	return false
 }
+
+func insideOfCategory(category string, categories []string) bool {
+	for _, c := range categories {
+		if c == category {
+			return true
+		}
+	}
+	return false
+}
+
+func (config *Config) IsCategory(category string) bool {
+	matched := insideOfCategory(category, config.Categories.Regular)
+	if matched {
+		return true
+	}
+	return insideOfCategory(category, config.Categories.Overtime)
+
+}
+func (config *Config) IsOvertime(category string) bool {
+	return insideOfCategory(category, config.Categories.Overtime)
+
+}

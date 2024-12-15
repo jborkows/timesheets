@@ -50,3 +50,19 @@ func TestShouldBeNotFindHoliday(t *testing.T) {
 	date := model.DateInfo{Value: "2021-11-12"}
 	assert.False(t, config.IsHoliday(&date))
 }
+
+func TestSouldBeCategory(t *testing.T) {
+	t.Parallel()
+	config, _ := model.ReadConfig(strings.NewReader(fakingToml))
+	assert.True(t, config.IsCategory("categoryA"))
+	assert.True(t, config.IsCategory("categoryB"))
+	assert.True(t, config.IsCategory("overtimeA"))
+	assert.False(t, config.IsCategory("categoryC"))
+}
+
+func TestIsOvertime(t *testing.T) {
+	t.Parallel()
+	config, _ := model.ReadConfig(strings.NewReader(fakingToml))
+	assert.True(t, config.IsOvertime("overtimeA"))
+	assert.False(t, config.IsOvertime("categoryA"))
+}
