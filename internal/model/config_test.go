@@ -26,3 +26,27 @@ func TestReadToml(t *testing.T) {
 	assert.Equal(t, 4, len(config.Holidays.Repeatable))
 	assert.Equal(t, 1, len(config.Holidays.AddHoc))
 }
+
+func TestShouldBeAddHocHoliday(t *testing.T) {
+	t.Parallel()
+	config, _ := model.ReadConfig(strings.NewReader(fakingToml))
+	date := model.DateInfo{Value: "2021-02-01"}
+	assert.True(t, config.IsHoliday(&date))
+}
+
+func TestShouldBeFindRegularHoliday(t *testing.T) {
+	t.Parallel()
+	config, _ := model.ReadConfig(strings.NewReader(fakingToml))
+	date := model.DateInfo{Value: "2021-11-11"}
+	assert.True(t, config.IsHoliday(&date))
+	date = model.DateInfo{Value: "2022-11-11"}
+	assert.True(t, config.IsHoliday(&date))
+	date = model.DateInfo{Value: "2024-12-25"}
+	assert.True(t, config.IsHoliday(&date))
+}
+func TestShouldBeNotFindHoliday(t *testing.T) {
+	t.Parallel()
+	config, _ := model.ReadConfig(strings.NewReader(fakingToml))
+	date := model.DateInfo{Value: "2021-11-12"}
+	assert.False(t, config.IsHoliday(&date))
+}

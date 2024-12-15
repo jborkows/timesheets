@@ -30,3 +30,20 @@ func ReadConfig(r io.Reader) (*Config, error) {
 	}
 	return &config, nil
 }
+
+func (config *Config) IsHoliday(info *DateInfo) bool {
+	for _, addHoc := range config.Holidays.AddHoc {
+		if addHoc == info.Value {
+			return true
+		}
+	}
+	for _, repeatable := range config.Holidays.Repeatable {
+		if !(len(info.Value) == len("2024-12-24")) {
+			return false
+		}
+		if repeatable == info.Value[5:] {
+			return true
+		}
+	}
+	return false
+}
