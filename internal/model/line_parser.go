@@ -9,8 +9,6 @@ import (
 	"strings"
 )
 
-type HolidayClassifier = func(aDate *DateInfo) bool
-
 type EmptyLine struct {
 	Err error
 }
@@ -25,18 +23,6 @@ type InvalidCategory struct {
 
 func (e *InvalidCategory) Error() string {
 	return fmt.Sprintf("%v", e.Err)
-}
-
-type InvalidTime struct {
-	Err error
-}
-
-func (e *InvalidTime) Error() string {
-	return fmt.Sprintf("%v", e.Err)
-}
-
-type DateInfo struct {
-	Value string
 }
 
 type Parser struct {
