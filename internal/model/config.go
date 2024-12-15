@@ -14,9 +14,14 @@ type holidays struct {
 	AddHoc     []string
 }
 
+type taskDefinition struct {
+	Prefix      string
+	OnlyNumbers bool
+}
 type Config struct {
 	Categories categories
 	Holidays   holidays
+	Tasks      taskDefinition
 }
 
 func ReadConfig(r io.Reader) (*Config, error) {

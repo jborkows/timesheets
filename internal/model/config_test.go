@@ -15,6 +15,9 @@ overtime=["overtimeA"]
 [holidays]
 repeatable=["11-11","05-01","01-01", "12-25"]
 addhoc=["2021-02-01"]
+[tasks]
+prefix="task-"
+onlyNumbers=true
 `
 
 func TestReadToml(t *testing.T) {
@@ -25,6 +28,9 @@ func TestReadToml(t *testing.T) {
 	assert.Equal(t, 1, len(config.Categories.Overtime))
 	assert.Equal(t, 4, len(config.Holidays.Repeatable))
 	assert.Equal(t, 1, len(config.Holidays.AddHoc))
+	assert.Equal(t, 1, len(config.Holidays.AddHoc))
+	assert.Equal(t, "task-", config.Tasks.Prefix)
+	assert.Equal(t, true, config.Tasks.OnlyNumbers)
 }
 
 func TestShouldBeAddHocHoliday(t *testing.T) {
