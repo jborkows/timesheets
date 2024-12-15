@@ -1,6 +1,6 @@
 module github.com/jborkows/timesheets
 
-go 1.23.3
+go 1.23.4
 
 require (
 	github.com/golang-migrate/migrate/v4 v4.18.1
