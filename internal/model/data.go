@@ -15,3 +15,27 @@ type DateInfo struct {
 }
 
 type HolidayClassifier = func(aDate *DateInfo) bool
+type Statitic struct {
+	Category string
+	Hours    uint8
+	Minutes  uint8
+	Overtime bool
+}
+
+type DailyStatistic struct {
+	Category string
+	Dirty    Statitic
+	Daily    Statitic
+}
+
+type WeeklyStatistic struct {
+	Category string
+	Dirty    Statitic
+	Weekly   Statitic
+}
+
+type MonthlyStatistic struct {
+	Category      string
+	Monthly       Statitic
+	RequiredHours uint8
+}
