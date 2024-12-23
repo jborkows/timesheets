@@ -4,10 +4,20 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
+	"os"
+	"time"
+
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/sqlite"
+	_ "github.com/golang-migrate/migrate/v4/source/file" // for loading migrations from files
+	_ "github.com/mattn/go-sqlite3"                      // SQLite driver
 	"github.com/uptrace/opentelemetry-go-extra/otelsql"
 	semconv "go.opentelemetry.io/otel/semconv/v1.10.0"
-	"log"
-	"time"
+
+	"embed"
+
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 )
 
 type Database struct {
@@ -35,10 +45,46 @@ func NewDatabase(filePath string) (*Database, error) {
 		return nil, fmt.Errorf("While pinging %w", err)
 	}
 	log.Println("Database connected successfully.")
-	return &Database{db}, nil
+	runMigrations(db)
+	database := &Database{db}
+	if err := database.optimize(); err != nil {
+		return nil, fmt.Errorf("While optimizing %w", err)
+	}
+	return database, nil
 }
 
-func (d *Database) Optimize() error {
+//go:embed schema/migrations/*.sql
+var migrationFiles embed.FS
+
+func runMigrations(db *sql.DB) error {
+	wd, err := os.Getwd()
+	if err != nil {
+		fmt.Println("Error getting working directory:", err)
+		return err
+	}
+	fmt.Println("Working directory:", wd)
+	d, err := iofs.New(migrationFiles, "schema/migrations")
+	if err != nil {
+		log.Fatalf("Failed to initialize migration source: %v", err)
+	}
+	driver, err := sqlite.WithInstance(db, &sqlite.Config{})
+	if err != nil {
+		return err
+	}
+	m, err := migrate.NewWithInstance("iofs", d, "sqlite3", driver)
+	if err != nil {
+		log.Fatalf("Failed to create migrate instance: %v", err)
+	}
+
+	// Run migrations
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		log.Fatalf("Migration failed: %v", err)
+	}
+
+	return nil
+}
+
+func (d *Database) optimize() error {
 	return Execute(context.Background(), d, func(tx *sql.Tx) error {
 		_, err := tx.Exec("PRAGMA optimize")
 		return err
