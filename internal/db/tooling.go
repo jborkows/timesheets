@@ -20,11 +20,7 @@ import (
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 )
 
-type Database struct {
-	*sql.DB
-}
-
-func NewDatabase(filePath string) (*Database, error) {
+func NewDatabase(filePath string) (*sql.DB, error) {
 
 	dsn := fmt.Sprintf("file:%s?_journal_mode=WAL&_foreign_keys=ON&_cache_size=2000&_busy_timeout=5000", filePath)
 	db, err := otelsql.Open("sqlite3", dsn,
@@ -46,11 +42,10 @@ func NewDatabase(filePath string) (*Database, error) {
 	}
 	log.Println("Database connected successfully.")
 	runMigrations(db)
-	database := &Database{db}
-	if err := database.optimize(); err != nil {
+	if err := optimize(db); err != nil {
 		return nil, fmt.Errorf("While optimizing %w", err)
 	}
-	return database, nil
+	return db, nil
 }
 
 //go:embed schema/migrations/*.sql
@@ -84,50 +79,29 @@ func runMigrations(db *sql.DB) error {
 	return nil
 }
 
-func (d *Database) optimize() error {
-	return Execute(context.Background(), d, func(tx *sql.Tx) error {
-		_, err := tx.Exec("PRAGMA optimize")
+func WithinTransaction(db *sql.DB, code func(tx *Queries) error) error {
+	tx, err := db.Begin()
+	if err != nil {
 		return err
-	})
-}
-
-func (d *Database) Close() error {
-	return d.DB.Close()
-}
-func Execute(ctx context.Context, db *Database, exec func(*sql.Tx) error) error {
-	_, err := RunTransaction(ctx, db, func(tx *sql.Tx) (*interface{}, error) {
-		return nil, exec(tx)
-	})
+	}
+	executor := New(db)
+	txExecutor := executor.WithTx(tx)
+	err = code(txExecutor)
+	if err != nil {
+		if err = tx.Rollback(); err != nil {
+			return fmt.Errorf("While rolling back %w", err)
+		} else {
+			return fmt.Errorf("While running transaction %w", err)
+		}
+	}
+	err = tx.Commit()
 	return err
 }
 
-func RunTransaction[T any](ctx context.Context, db *Database, exec func(*sql.Tx) (*T, error)) (*T, error) {
-	tx, err := db.Begin()
-	if err != nil {
-		return nil, fmt.Errorf("failed to begin transaction: %w", err)
-	}
+func optimize(database *sql.DB) error {
+	return WithinTransaction(database, func(tx *Queries) error {
+		_, err := tx.db.ExecContext(context.Background(), "PRAGMA optimize")
+		return err
+	})
 
-	defer func() {
-		if r := recover(); r != nil {
-			if err := tx.Rollback(); err != nil {
-				panic(fmt.Errorf("failed to rollback transaction: %w", err))
-			}
-			panic(r) // Re-panic after rollback
-		} else if err != nil {
-			if err := tx.Rollback(); err != nil {
-				panic(fmt.Errorf("failed to rollback transaction: %w", err))
-			}
-		}
-	}()
-
-	value, err := exec(tx)
-	if err != nil {
-		return nil, fmt.Errorf("Executing exec %w", err)
-	}
-
-	if err := tx.Commit(); err != nil {
-		return nil, fmt.Errorf("failed to commit transaction: %w", err)
-	}
-
-	return value, nil
 }
