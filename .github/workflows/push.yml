@@ -13,6 +13,10 @@ jobs:
           go-version: stable
       - name: Display Go version
         run: go version
+      - uses: sqlc-dev/setup-sqlc@v4
+        with:
+          sqlc-version: '1.25.0'
+      - run: sqlc version
       - name: Run tests
         run: make tests
       - name: golangci-lint
