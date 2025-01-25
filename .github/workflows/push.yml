@@ -14,12 +14,15 @@ jobs:
       - name: Display Go version
         run: go version
       - uses: sqlc-dev/setup-sqlc@v4
+        timeout-minutes: 5
         with:
           sqlc-version: '1.25.0'
       - run: sqlc version
       - name: Run tests
+        timeout-minutes: 5
         run: make tests
       - name: golangci-lint
+        timeout-minutes: 5
         uses: golangci/golangci-lint-action@v6
         with:
           version: v1.60
