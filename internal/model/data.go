@@ -62,7 +62,7 @@ type Week struct {
 	EndDate   Day
 }
 
-func (w *Week) daysInWeek() int8 {
+func (w *Week) DaysInWeek() int8 {
 	diff := int8(time.Time(w.EndDate).Day() - time.Time(w.BeginDate).Day())
 	if diff == 0 {
 		return 1
@@ -83,6 +83,7 @@ type Month struct {
 func (w *Month) String() string {
 	return fmt.Sprintf("%s - %s", w.BeginDate.String(), w.EndDate.String())
 }
-func (w *Month) daysInMonth() int8 {
+
+func (w *Month) DaysInMonth() int8 {
 	return int8(time.Time(w.EndDate).Day() - time.Time(w.BeginDate).Day())
 }

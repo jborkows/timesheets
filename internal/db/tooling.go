@@ -41,7 +41,9 @@ func NewDatabase(filePath string) (*sql.DB, error) {
 		return nil, fmt.Errorf("While pinging %w", err)
 	}
 	log.Println("Database connected successfully.")
-	runMigrations(db)
+	if err := runMigrations(db); err != nil {
+		return nil, fmt.Errorf("While running migrations %w", err)
+	}
 	if err := optimize(db); err != nil {
 		return nil, fmt.Errorf("While optimizing %w", err)
 	}
