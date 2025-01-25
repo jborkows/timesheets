@@ -1,6 +1,9 @@
 package model
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 type InvalidTime struct {
 	Err error
@@ -38,4 +41,48 @@ type MonthlyStatistic struct {
 	Category      string
 	Monthly       Statitic
 	RequiredHours uint8
+}
+
+type Day time.Time
+
+func (d *Day) String() string {
+	return time.Time(*d).Format("2006-01-02")
+}
+
+func (d *Day) DayOfWeek() time.Weekday {
+	return time.Time(*d).Weekday()
+}
+
+func (d *Day) DayOfMonth() int8 {
+	return int8(time.Time(*d).Day())
+}
+
+type Week struct {
+	BeginDate Day
+	EndDate   Day
+}
+
+func (w *Week) daysInWeek() int8 {
+	diff := int8(time.Time(w.EndDate).Day() - time.Time(w.BeginDate).Day())
+	if diff == 0 {
+		return 1
+	} else {
+		return diff
+	}
+}
+
+func (w *Week) String() string {
+	return fmt.Sprintf("%s - %s", w.BeginDate.String(), w.EndDate.String())
+}
+
+type Month struct {
+	BeginDate Day
+	EndDate   Day
+}
+
+func (w *Month) String() string {
+	return fmt.Sprintf("%s - %s", w.BeginDate.String(), w.EndDate.String())
+}
+func (w *Month) daysInMonth() int8 {
+	return int8(time.Time(w.EndDate).Day() - time.Time(w.BeginDate).Day())
 }

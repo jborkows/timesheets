@@ -141,6 +141,7 @@ func TestShouldAllowItemWithoutTask(t *testing.T) {
 }
 
 func TestShouldSumUpAllEntries(t *testing.T) {
+	t.Parallel()
 	timesheet := aTimesheet()
 	entry := aTimeSheetEntry()
 	entry.Hours = 4
@@ -161,6 +162,7 @@ func TestShouldSumUpAllEntries(t *testing.T) {
 }
 
 func TestShouldAllEntriesCouldSumUpAbove8hours(t *testing.T) {
+	t.Parallel()
 	timesheet := aTimesheet()
 	entry := aTimeSheetEntry()
 	entry.Hours = 4
@@ -178,4 +180,64 @@ func TestShouldAllEntriesCouldSumUpAbove8hours(t *testing.T) {
 	assert.Equal(t, uint8(8), timesheet.PotentialTotalTime())
 	assert.Equal(t, float32(8.5), timesheet.WorkingTime())
 
+}
+
+func TestShouldBeAbleToConvertTimesheetToDays(t *testing.T) {
+	t.Parallel()
+	timesheet, error := model.NewTimesheet("2025-01-25")
+	if error != nil {
+		t.Errorf("Error creating timesheet: %v", error)
+	}
+	aDay := timesheet.Day()
+	assert.Equal(t, "2025-01-25", aDay.String())
+}
+
+func TestShouldBeAbleToConvertTimesheetToWeek(t *testing.T) {
+	t.Parallel()
+	timesheet, error := model.NewTimesheet("2025-01-25")
+	if error != nil {
+		t.Errorf("Error creating timesheet: %v", error)
+	}
+	aWeek := timesheet.Week()
+	assert.Equal(t, "2025-01-20 - 2025-01-26", aWeek.String())
+}
+
+func TestShouldBeAbleToConvertTimesheetToWeekOnMonday(t *testing.T) {
+	t.Parallel()
+	timesheet, error := model.NewTimesheet("2025-01-20")
+	if error != nil {
+		t.Errorf("Error creating timesheet: %v", error)
+	}
+	aWeek := timesheet.Week()
+	assert.Equal(t, "2025-01-20 - 2025-01-26", aWeek.String())
+}
+
+func TestShouldBeAbleToConvertTimesheetToWeekOnSunday(t *testing.T) {
+	t.Parallel()
+	timesheet, error := model.NewTimesheet("2025-01-26")
+	if error != nil {
+		t.Errorf("Error creating timesheet: %v", error)
+	}
+	aWeek := timesheet.Week()
+	assert.Equal(t, "2025-01-20 - 2025-01-26", aWeek.String())
+}
+
+func TestShouldBeAbleToConvertTimesheetToEvenIfNewMonthStartsInMiddle(t *testing.T) {
+	t.Parallel()
+	timesheet, error := model.NewTimesheet("2025-04-01")
+	if error != nil {
+		t.Errorf("Error creating timesheet: %v", error)
+	}
+	aWeek := timesheet.Week()
+	assert.Equal(t, "2025-04-01 - 2025-04-06", aWeek.String())
+}
+
+func TestShouldBeAbleToConvertTimesheetToEvenIfNewMonthEndsInMiddle(t *testing.T) {
+	t.Parallel()
+	timesheet, error := model.NewTimesheet("2025-03-31")
+	if error != nil {
+		t.Errorf("Error creating timesheet: %v", error)
+	}
+	aWeek := timesheet.Week()
+	assert.Equal(t, "2025-03-31 - 2025-03-31", aWeek.String())
 }

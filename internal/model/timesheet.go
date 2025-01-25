@@ -12,7 +12,7 @@ type WorkItem interface {
 }
 
 type Holiday struct {
-	Date        string
+	Date        Day
 	Description string
 }
 
@@ -25,12 +25,26 @@ type TimesheetEntry struct {
 }
 
 type Timesheet struct {
-	Date    string
+	Date    Day
 	Entries []WorkItem
 }
 
+func parseDate(date string) (*Day, error) {
+	parsed, error := time.Parse("2006-01-02", date)
+
+	if error != nil {
+		return nil, &ValidateDateError{Date: date, Err: error}
+	}
+	asDay := Day(parsed)
+	return &(asDay), nil
+}
+
 func NewHoliday(date string, description string) (*Holiday, error) {
-	return &Holiday{Date: date, Description: description}, nil
+	parsed, err := parseDate(date)
+	if err != nil {
+		return nil, fmt.Errorf("invalid date: %w", err)
+	}
+	return &Holiday{Date: *parsed, Description: description}, nil
 }
 
 func (h *Holiday) IsHoliday() bool {
@@ -67,19 +81,12 @@ func (e *InvalidTimesheetEntry) Error() string {
 	return fmt.Sprintf("invalid entry: %v", e.Err)
 }
 
-func validateDate(date string) error {
-	_, error := time.Parse("2006-01-02", date)
-	if error != nil {
-		return &ValidateDateError{Date: date, Err: error}
-	}
-	return nil
-}
-
 func NewTimesheet(date string) (*Timesheet, error) {
-	if err := validateDate(date); err != nil {
-		return nil, fmt.Errorf("invalid date: %w", err)
+	parsed, error := parseDate(date)
+	if error != nil {
+		return nil, fmt.Errorf("invalid date: %w", error)
 	}
-	return &Timesheet{Date: date}, nil
+	return &Timesheet{Date: *parsed}, nil
 }
 
 func (t *Timesheet) Clear() {
@@ -133,4 +140,60 @@ func (t *Timesheet) WorkingTime() float32 {
 		total += float32(entry.Hours) + float32(entry.Minutes)/60
 	}
 	return total
+}
+
+func (t *Timesheet) Day() Day {
+	return Day(t.Date)
+}
+
+func (t *Timesheet) startOfWeek() *Day {
+	dayOfWeek := t.Date.DayOfWeek()
+	if dayOfWeek == time.Monday {
+		return &t.Date
+	}
+	if t.Date.DayOfMonth() == 1 {
+		return &t.Date
+	}
+	backToTime := time.Time(t.Date)
+	for i := int(dayOfWeek); i != int(time.Monday); i-- {
+		backToTime = backToTime.AddDate(0, 0, -1)
+		if backToTime.Weekday() == time.Monday {
+			startOfWeek := Day(backToTime)
+			return &startOfWeek
+		}
+		if backToTime.Day() == 1 {
+			startOfWeek := Day(backToTime)
+			return &startOfWeek
+		}
+	}
+	panic("unreachable")
+}
+
+func (t *Timesheet) endOfWeek() *Day {
+	dayOfWeek := t.Date.DayOfWeek()
+	if dayOfWeek == time.Sunday {
+		return &t.Date
+	}
+	backToTime := time.Time(t.Date)
+	for i := int(dayOfWeek); i != int(time.Sunday); i++ {
+		backToTime = backToTime.AddDate(0, 0, 1)
+		if backToTime.Weekday() == time.Sunday {
+			endOfWeek := Day(backToTime)
+			return &endOfWeek
+		}
+		if backToTime.Day() == 1 {
+			endOfWeek := Day(backToTime.AddDate(0, 0, -1))
+			return &endOfWeek
+		}
+	}
+	panic("unreachable")
+}
+
+func (t *Timesheet) Week() *Week {
+	startOfWeek := t.startOfWeek()
+	endOfWeek := t.endOfWeek()
+	return &Week{
+		BeginDate: *startOfWeek,
+		EndDate:   *endOfWeek,
+	}
 }
