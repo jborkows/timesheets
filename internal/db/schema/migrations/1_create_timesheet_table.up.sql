@@ -1,5 +1,4 @@
 CREATE TABLE timesheet (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    date integer NOT NULL
+    date integer PRIMARY KEY NOT NULL
 );
 

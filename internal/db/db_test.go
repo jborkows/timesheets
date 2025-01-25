@@ -19,12 +19,10 @@ func TestMigrations(t *testing.T) {
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
-
 	// Add test logic here, e.g., checking if tables were created
 }
 
 func cleanupFunc(tempFile *os.File) {
-
 	cleanup := func() {
 		tempFile.Close()
 		err := os.Remove(tempFile.Name())
