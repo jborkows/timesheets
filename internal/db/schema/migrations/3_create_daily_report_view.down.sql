@@ -1,2 +1,2 @@
-drop view daily_report;
+drop view daily_report_data;
 

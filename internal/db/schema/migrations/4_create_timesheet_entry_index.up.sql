@@ -1,1 +1,1 @@
-create index timesheet_entry_timesheet_id_index on timesheet_entry(timesheet_date);
+create index timesheet_entry_timesheet_id_index on timesheet_entry_data(timesheet_date);

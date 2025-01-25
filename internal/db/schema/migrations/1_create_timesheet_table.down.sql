@@ -1,2 +1,2 @@
-DROP TABLE timesheet;
+DROP TABLE timesheet_data;
 
