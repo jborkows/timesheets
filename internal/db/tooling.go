@@ -73,10 +73,20 @@ func runMigrations(db *sql.DB) error {
 		log.Fatalf("Failed to create migrate instance: %v", err)
 	}
 
+	version, dirty, error := m.Version()
+	if error != nil {
+		log.Printf("Failed to get migration version: %v", error)
+	}
+	log.Printf("Current migration version: %d, dirty: %t", version, dirty)
 	// Run migrations
 	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
 		log.Fatalf("Migration failed: %v", err)
 	}
+	version, dirty, error = m.Version()
+	if error != nil {
+		log.Fatalf("Failed to get migration version: %v", error)
+	}
+	log.Printf("After migration version: %d, dirty: %t", version, dirty)
 
 	return nil
 }

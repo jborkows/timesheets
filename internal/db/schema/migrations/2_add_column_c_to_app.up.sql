@@ -1,2 +1,0 @@
-ALTER TABLE app ADD COLUMN c TEXT;
-

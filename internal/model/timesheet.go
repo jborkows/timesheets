@@ -110,6 +110,7 @@ func validate(entry *TimesheetEntry) error {
 	}
 	return nil
 }
+
 func (t *Timesheet) AddEntry(entry TimesheetEntry) error {
 	if err := validate(&entry); err != nil {
 		return fmt.Errorf("invalid entry: %w", err)

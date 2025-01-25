@@ -1,7 +1,6 @@
 package db_test
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"testing"
@@ -69,7 +68,7 @@ func TestShouldBeAbleToPresentDailyStatisticsSave(t *testing.T) {
 		timesheet := TimesheetForDate(time.Now())
 
 		task := "work"
-		entry := TimesheetEntry{Hours: 4, Minutes: 0, Category: "work", Comment: "work", Task: &task}
+		entry := TimesheetEntry{Hours: 4, Minutes: 20, Category: "work", Comment: "work", Task: &task}
 		if error := timesheet.AddEntry(entry); error != nil {
 			t.Errorf("Error adding entry: %v", error)
 		}
@@ -84,7 +83,9 @@ func TestShouldBeAbleToPresentDailyStatisticsSave(t *testing.T) {
 		assert.Equal(t, 1, len(statistics), "Expected 1 entry statistic, got %d", len(statistics))
 		stat := statistics[0]
 		assert.Equal(t, 4, stat.Dirty.Hours, "Expected 4 hours, got %d", stat.Dirty.Hours)
-		assert.Equal(t, 4, stat.Daily.Hours, "Expected 0 hours, got %d", stat.Daily.Hours)
+		assert.Equal(t, 4, stat.Daily.Hours, "Expected 4 hours, got %d", stat.Daily.Hours)
+		assert.Equal(t, 20, stat.Dirty.Minutes, "Expected 20 minutes, got %d", stat.Dirty.Minutes)
+		assert.Equal(t, 20, stat.Daily.Minutes, "Expected 20 minutes, got %d", stat.Daily.Minutes)
 
 	})
 }
@@ -92,17 +93,7 @@ func TestShouldBeAbleToPresentDailyStatisticsSave(t *testing.T) {
 func useDb(t *testing.T, test func(saver Saver, querier Queryer)) {
 	t.Parallel()
 	tempFile, err := os.CreateTemp("", "testdb-*.db")
-	defer func() {
-		tempFile.Close()
-
-		err = os.Remove(tempFile.Name())
-		if err != nil {
-			fmt.Println("Error removing temporary file:", err)
-		} else {
-			fmt.Println("Temporary file removed.")
-		}
-	}()
-
+	defer cleanupFunc(tempFile)
 	_, err = NewDatabase(tempFile.Name())
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
