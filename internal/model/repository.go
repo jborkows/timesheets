@@ -19,7 +19,7 @@ type KnowsAboutDate interface {
 }
 
 type Queryer interface {
-	Daily(knowsAboutDate *KnowsAboutDate) ([]DailyStatistic, error)
-	Weekly(knowsAboutWeek *KnowsAboutWeek) ([]WeeklyStatistic, error)
-	Monthly(knowsAboutMonth *KnowsAboutMonth) ([]MonthlyStatistic, error)
+	Daily(knowsAboutDate KnowsAboutDate) ([]DailyStatistic, error)
+	Weekly(knowsAboutWeek KnowsAboutWeek) ([]WeeklyStatistic, error)
+	Monthly(knowsAboutMonth KnowsAboutMonth) ([]MonthlyStatistic, error)
 }

@@ -81,6 +81,11 @@ func (e *InvalidTimesheetEntry) Error() string {
 	return fmt.Sprintf("invalid entry: %v", e.Err)
 }
 
+func TimesheetForDate(aTime time.Time) *Timesheet {
+	aDay := Day(aTime)
+	return &Timesheet{Date: aDay}
+}
+
 func NewTimesheet(date string) (*Timesheet, error) {
 	parsed, error := parseDate(date)
 	if error != nil {
@@ -142,8 +147,8 @@ func (t *Timesheet) WorkingTime() float32 {
 	return total
 }
 
-func (t *Timesheet) Day() Day {
-	return Day(t.Date)
+func (t *Timesheet) Day() *Day {
+	return &t.Date
 }
 
 func (t *Timesheet) startOfWeek() *Day {
