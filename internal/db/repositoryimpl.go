@@ -6,22 +6,22 @@ import (
 	"strconv"
 	"time"
 
-	. "github.com/jborkows/timesheets/internal/model"
+	"github.com/jborkows/timesheets/internal/model"
 )
 
 type impl struct {
 	queries  *Queries
-	overtime func(CategoryType) bool
+	overtime func(model.CategoryType) bool
 }
 
-func Repository(queries *Queries, overtime func(CategoryType) bool) *impl {
+func Repository(queries *Queries, overtime func(model.CategoryType) bool) *impl {
 	return &impl{
 		queries:  queries,
 		overtime: overtime,
 	}
 }
 
-func (repository *impl) Save(timesheet *Timesheet) error {
+func (repository *impl) Save(timesheet *model.Timesheet) error {
 	err := repository.queries.ClearTimesheetData(context.TODO(), dayAsInteger(&timesheet.Date))
 	if err != nil {
 		return fmt.Errorf("failed to clear time sheet data: %w", err)
@@ -37,7 +37,7 @@ func (repository *impl) Save(timesheet *Timesheet) error {
 	return nil
 }
 
-func (self *impl) PendingSave(timesheet *Timesheet) error {
+func (self *impl) PendingSave(timesheet *model.Timesheet) error {
 	err := self.queries.ClearPending(context.TODO(), dayAsInteger(&timesheet.Date))
 	if err != nil {
 		return fmt.Errorf("failed to clear pending: %w", err)
@@ -45,7 +45,7 @@ func (self *impl) PendingSave(timesheet *Timesheet) error {
 	return self.saveTimeSheet(timesheet, "PENDING")
 }
 
-func (self *impl) saveTimeSheet(timesheet *Timesheet, pendingInput string) error {
+func (self *impl) saveTimeSheet(timesheet *model.Timesheet, pendingInput string) error {
 	pending := pendingInput == "PENDING"
 
 	err := self.queries.CreateTimesheet(context.TODO(), dayAsInteger(&timesheet.Date))
@@ -53,7 +53,7 @@ func (self *impl) saveTimeSheet(timesheet *Timesheet, pendingInput string) error
 		return fmt.Errorf("failed to create time sheet: %w", err)
 	}
 	for _, entry := range timesheet.Entries {
-		holiday, ok := entry.(*Holiday)
+		holiday, ok := entry.(*model.Holiday)
 		if ok {
 			err := self.queries.AddHoliday(context.TODO(), AddHolidayParams{
 				Holiday:       true,
@@ -65,7 +65,7 @@ func (self *impl) saveTimeSheet(timesheet *Timesheet, pendingInput string) error
 			}
 			continue
 		}
-		entry, ok := entry.(*TimesheetEntry)
+		entry, ok := entry.(*model.TimesheetEntry)
 		if !ok {
 			continue
 		}
@@ -89,25 +89,25 @@ func (self *impl) saveTimeSheet(timesheet *Timesheet, pendingInput string) error
 	return nil
 }
 
-func (self *impl) Daily(knowsAboutDate KnowsAboutDate) ([]DailyStatistic, error) {
+func (self *impl) Daily(knowsAboutDate model.KnowsAboutDate) ([]model.DailyStatistic, error) {
 	values, err := self.queries.FindStatistics(context.TODO(), dayAsInteger(knowsAboutDate.Day()))
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to find statistics: %w", err)
 	}
-	bucket := make(map[CategoryType]*DailyStatistic, len(values)/2+1)
+	bucket := make(map[model.CategoryType]*model.DailyStatistic, len(values)/2+1)
 	for _, value := range values {
 		_, ok := bucket[value.Category]
-		overtime := self.overtime(CategoryType(value.Category))
+		overtime := self.overtime(model.CategoryType(value.Category))
 		if !ok {
-			pointer := DailyStatistic{
-				Dirty: Statitic{
+			pointer := model.DailyStatistic{
+				Dirty: model.Statitic{
 					Category: value.Category,
 					Hours:    0,
 					Minutes:  0,
 					Overtime: overtime,
 				},
-				Daily: Statitic{
+				Daily: model.Statitic{
 					Category: value.Category,
 					Hours:    0,
 					Minutes:  0,
@@ -133,22 +133,22 @@ func (self *impl) Daily(knowsAboutDate KnowsAboutDate) ([]DailyStatistic, error)
 		}
 
 	}
-	bucketSlice := make([]DailyStatistic, 0, len(bucket))
+	bucketSlice := make([]model.DailyStatistic, 0, len(bucket))
 	for _, value := range bucket {
 		bucketSlice = append(bucketSlice, *value)
 	}
 	return bucketSlice, nil
 }
 
-func (repository *impl) Weekly(knowsAboutWeek KnowsAboutWeek) ([]WeeklyStatistic, error) {
+func (repository *impl) Weekly(knowsAboutWeek model.KnowsAboutWeek) ([]model.WeeklyStatistic, error) {
 	return nil, nil
 }
 
-func (repository *impl) Monthly(knowsAboutMonth KnowsAboutMonth) ([]MonthlyStatistic, error) {
+func (repository *impl) Monthly(knowsAboutMonth model.KnowsAboutMonth) ([]model.MonthlyStatistic, error) {
 	return nil, nil
 }
 
-func dayAsInteger(d *Day) int64 {
+func dayAsInteger(d *model.Day) int64 {
 	value := time.Time(*d).Format("20060102")
 	v, e := strconv.Atoi(value)
 	if e != nil {
