@@ -76,7 +76,7 @@ func runMigrations(db *sql.DB) error {
 	if err != nil {
 		return err
 	}
-	m, err := migrate.NewWithInstance("iofs", d, "sqlite3", driver) //nolint:errcheck
+	m, err := migrate.NewWithInstance("iofs", d, "sqlite3", driver)
 	if err != nil {
 		log.Fatalf("Failed to create migrate instance: %v", err)
 	}
@@ -87,7 +87,7 @@ func runMigrations(db *sql.DB) error {
 	}
 	log.Printf("Current migration version: %d, dirty: %t", version, dirty)
 	// Run migrations
-	if err := m.Up(); err != nil && err != migrate.ErrNoChange { //nolint:errcheck
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
 
 		log.Fatalf("Migration failed: %v", err)
 	}

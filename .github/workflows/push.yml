@@ -13,6 +13,8 @@ jobs:
           go-version: stable
       - name: Display Go version
         run: go version
+      - name: Tidy up
+        run: go mod tidy
       - uses: sqlc-dev/setup-sqlc@v4
         timeout-minutes: 5
         with:
