@@ -6,6 +6,10 @@ type Saver interface {
 	PendingSave(timesheet *Timesheet) error
 }
 
+type TransactionProvider interface {
+	Execute(workUnit func(Saver, Queryer))
+}
+
 type KnowsAboutWeek interface {
 	Week() *Week
 }
