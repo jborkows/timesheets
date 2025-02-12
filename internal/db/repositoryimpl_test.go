@@ -7,14 +7,14 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/jborkows/timesheets/internal/db"
-	. "github.com/jborkows/timesheets/internal/model"
+	dbp "github.com/jborkows/timesheets/internal/db"
+	"github.com/jborkows/timesheets/internal/model"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestShouldBeAbleToDisplayStatisticsForNoneData(t *testing.T) {
-	useDb(t, func(saver Saver, query Queryer) {
-		timesheet := TimesheetForDate(time.Now())
+	useDb(t, func(saver model.Saver, query model.Queryer) {
+		timesheet := model.TimesheetForDate(time.Now())
 
 		statistics, err := query.Daily(timesheet)
 		if err != nil {
@@ -27,11 +27,11 @@ func TestShouldBeAbleToDisplayStatisticsForNoneData(t *testing.T) {
 }
 
 func TestShouldBeAbleToPresentDailyStatisticsPendingThenSave(t *testing.T) {
-	useDb(t, func(saver Saver, query Queryer) {
-		timesheet := TimesheetForDate(time.Now())
+	useDb(t, func(saver model.Saver, query model.Queryer) {
+		timesheet := model.TimesheetForDate(time.Now())
 
 		task := "work"
-		entry := TimesheetEntry{Hours: 4, Minutes: 0, Category: "work", Comment: "work", Task: &task}
+		entry := model.TimesheetEntry{Hours: 4, Minutes: 0, Category: "work", Comment: "work", Task: &task}
 		if error := timesheet.AddEntry(entry); error != nil {
 			t.Errorf("Error adding entry: %v", error)
 		}
@@ -65,11 +65,11 @@ func TestShouldBeAbleToPresentDailyStatisticsPendingThenSave(t *testing.T) {
 }
 
 func TestShouldBeAbleToPresentDailyStatisticsSave(t *testing.T) {
-	useDb(t, func(saver Saver, query Queryer) {
-		timesheet := TimesheetForDate(time.Now())
+	useDb(t, func(saver model.Saver, query model.Queryer) {
+		timesheet := model.TimesheetForDate(time.Now())
 
 		task := "work"
-		entry := TimesheetEntry{Hours: 4, Minutes: 20, Category: "work", Comment: "work", Task: &task}
+		entry := model.TimesheetEntry{Hours: 4, Minutes: 20, Category: "work", Comment: "work", Task: &task}
 		if error := timesheet.AddEntry(entry); error != nil {
 			t.Errorf("Error adding entry: %v", error)
 		}
@@ -91,21 +91,21 @@ func TestShouldBeAbleToPresentDailyStatisticsSave(t *testing.T) {
 	})
 }
 
-func useDb(t *testing.T, test func(saver Saver, querier Queryer)) {
+func useDb(t *testing.T, test func(saver model.Saver, querier model.Queryer)) {
 	t.Parallel()
 	tempFile, err := os.CreateTemp("", "testdb-*.db")
 	if err != nil {
 		log.Fatalf("Failed to create temporary file: %v", err)
 	}
 	defer cleanupFunc(tempFile)
-	db, err := NewDatabase(tempFile.Name())
+	db, err := dbp.NewDatabase(tempFile.Name())
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
 
-	support := NewTransactionSupport(db)
-	err = support.WithTransaction(context.Background(), func(ctx context.Context, q *Queries) error {
-		repository := Repository(q, func(CategoryType) bool { return false })
+	support := dbp.NewTransactionSupport(db)
+	err = support.WithTransaction(context.Background(), func(ctx context.Context, q *dbp.Queries) error {
+		repository := dbp.Repository(q, func(model.CategoryType) bool { return false })
 		test(repository, repository)
 		return nil
 	})
