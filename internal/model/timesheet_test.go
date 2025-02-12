@@ -20,7 +20,7 @@ func TestShouldNotBeAbleToCreateTimeSheetOnlyIfIsSomethingElse(t *testing.T) {
 	t.Parallel()
 	cases := []string{"aaa", "2021-11-55", "a2002-12-12"}
 	for _, c := range cases {
-		t.Run(fmt.Sprintf("Should not be able to create timesheet for %s", c), func(t *testing.T) {
+		t.Run(fmt.Sprintf("Should not be able to create time sheet for %s", c), func(t *testing.T) {
 			timesheet, err := model.NewTimesheet(c)
 			assert.Nil(t, timesheet)
 			var validateDateError *model.ValidateDateError
@@ -40,7 +40,7 @@ func TestShouldNotBePossibleToAddHolidayNotToSameTimesheet(t *testing.T) {
 	}
 	timesheet, error := model.NewTimesheet("2021-01-02")
 	if error != nil {
-		t.Errorf("Error creating timesheet: %v", error)
+		t.Errorf("Error creating time sheet: %v", error)
 	}
 	error = timesheet.AddHoliday(holiday)
 	assert.NotNil(t, error)
@@ -54,7 +54,7 @@ func TestShouldBePossibleToAddHolidayToSameTimesheet(t *testing.T) {
 	}
 	timesheet, error := model.NewTimesheet("2021-01-01")
 	if error != nil {
-		t.Errorf("Error creating timesheet: %v", error)
+		t.Errorf("Error creating time sheet: %v", error)
 	}
 	error = timesheet.AddHoliday(holiday)
 	assert.Nil(t, error)
@@ -68,7 +68,7 @@ func TestIfOneHolidayThenTimesheetShouldBeSpecific(t *testing.T) {
 	}
 	timesheet, error := model.NewTimesheet("2021-01-01")
 	if error != nil {
-		t.Errorf("Error creating timesheet: %v", error)
+		t.Errorf("Error creating time sheet: %v", error)
 	}
 	error = timesheet.AddHoliday(holiday)
 	if error != nil {
@@ -82,7 +82,7 @@ func TestIfOneHolidayThenTimesheetShouldBeSpecific(t *testing.T) {
 func aTimesheet() *model.Timesheet {
 	timesheet, error := model.NewTimesheet("2021-01-01")
 	if error != nil {
-		panic("Error creating timesheet")
+		panic("Error creating time sheet")
 	}
 	return timesheet
 }
@@ -101,7 +101,7 @@ func TestShouldNotAllowCreatingEntryWithNotCorrectHours(t *testing.T) {
 	var invalidEntry *model.InvalidTimesheetEntry
 	if errors.As(err, &invalidEntry) {
 	} else {
-		t.Errorf("Expected error to be of type InvaliedTimesheetEntry, got %v", err)
+		t.Errorf("Expected error to be of type InvalidTimesheetEntry, got %v", err)
 	}
 }
 
@@ -114,7 +114,7 @@ func TestShouldNotAllowCreatingEntryWithNotCorrectMinutes(t *testing.T) {
 	var invalidEntry *model.InvalidTimesheetEntry
 	if errors.As(err, &invalidEntry) {
 	} else {
-		t.Errorf("Expected error to be of type InvaliedTimesheetEntry, got %v", err)
+		t.Errorf("Expected error to be of type InvalidTimesheetEntry, got %v", err)
 	}
 }
 
@@ -128,7 +128,7 @@ func TestShouldNotAllowAddingTimesheetWithBothHoursAndMinutesEmpty(t *testing.T)
 	var invalidEntry *model.InvalidTimesheetEntry
 	if errors.As(err, &invalidEntry) {
 	} else {
-		t.Errorf("Expected error to be of type InvaliedTimesheetEntry, got %v", err)
+		t.Errorf("Expected error to be of type InvalidTimesheetEntry, got %v", err)
 	}
 }
 
@@ -186,7 +186,7 @@ func TestShouldBeAbleToConvertTimesheetToDays(t *testing.T) {
 	t.Parallel()
 	timesheet, error := model.NewTimesheet("2025-01-25")
 	if error != nil {
-		t.Errorf("Error creating timesheet: %v", error)
+		t.Errorf("Error creating time sheet: %v", error)
 	}
 	aDay := timesheet.Day()
 	assert.Equal(t, "2025-01-25", aDay.String())
@@ -196,7 +196,7 @@ func TestShouldBeAbleToConvertTimesheetToWeek(t *testing.T) {
 	t.Parallel()
 	timesheet, error := model.NewTimesheet("2025-01-25")
 	if error != nil {
-		t.Errorf("Error creating timesheet: %v", error)
+		t.Errorf("Error creating time sheet: %v", error)
 	}
 	aWeek := timesheet.Week()
 	assert.Equal(t, "2025-01-20 - 2025-01-26", aWeek.String())
@@ -206,7 +206,7 @@ func TestShouldBeAbleToConvertTimesheetToWeekOnMonday(t *testing.T) {
 	t.Parallel()
 	timesheet, error := model.NewTimesheet("2025-01-20")
 	if error != nil {
-		t.Errorf("Error creating timesheet: %v", error)
+		t.Errorf("Error creating time sheet: %v", error)
 	}
 	aWeek := timesheet.Week()
 	assert.Equal(t, "2025-01-20 - 2025-01-26", aWeek.String())
@@ -216,7 +216,7 @@ func TestShouldBeAbleToConvertTimesheetToWeekOnSunday(t *testing.T) {
 	t.Parallel()
 	timesheet, error := model.NewTimesheet("2025-01-26")
 	if error != nil {
-		t.Errorf("Error creating timesheet: %v", error)
+		t.Errorf("Error creating time sheet: %v", error)
 	}
 	aWeek := timesheet.Week()
 	assert.Equal(t, "2025-01-20 - 2025-01-26", aWeek.String())
@@ -226,7 +226,7 @@ func TestShouldBeAbleToConvertTimesheetToEvenIfNewMonthStartsInMiddle(t *testing
 	t.Parallel()
 	timesheet, error := model.NewTimesheet("2025-04-01")
 	if error != nil {
-		t.Errorf("Error creating timesheet: %v", error)
+		t.Errorf("Error creating time sheet: %v", error)
 	}
 	aWeek := timesheet.Week()
 	assert.Equal(t, "2025-04-01 - 2025-04-06", aWeek.String())
@@ -236,7 +236,7 @@ func TestShouldBeAbleToConvertTimesheetToEvenIfNewMonthEndsInMiddle(t *testing.T
 	t.Parallel()
 	timesheet, error := model.NewTimesheet("2025-03-31")
 	if error != nil {
-		t.Errorf("Error creating timesheet: %v", error)
+		t.Errorf("Error creating time sheet: %v", error)
 	}
 	aWeek := timesheet.Week()
 	assert.Equal(t, "2025-03-31 - 2025-03-31", aWeek.String())
