@@ -47,6 +47,14 @@ func NewDatabase(filePath string) (*sql.DB, error) {
 	if err := optimize(db); err != nil {
 		return nil, fmt.Errorf("While optimizing %w", err)
 	}
+	row := db.QueryRow("SELECT sqlite_version() as version")
+	var version string
+	err = row.Scan(&version)
+	if err != nil {
+		log.Printf("Failed to get SQLite version: %v", err)
+	}
+	log.Printf("SQLite version: %s", version)
+
 	return db, nil
 }
 
