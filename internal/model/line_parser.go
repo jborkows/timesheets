@@ -30,29 +30,56 @@ func (parser *Parser) ParseLine(dateInfo DateInfo) func(line string) (WorkItem, 
 	return parser.doParseLine
 }
 
-type tokenAnalyzer struct {
-	*Parser
-	temp  []token
-	state string
-	entry *TimesheetEntry
+type analyzerState int
+
+const (
+	StateCategory analyzerState = iota
+	StateHours
+	StateTask
+	StateComment
+)
+
+func (s analyzerState) String() string {
+	switch s {
+	case StateCategory:
+		return "category"
+	case StateHours:
+		return "hours"
+	case StateTask:
+		return "task"
+	case StateComment:
+		return "comment"
+	default:
+		return "unknown" // Important for handling unexpected values
+	}
 }
 
-func (analyzer *tokenAnalyzer) analyze(token token) (err error) {
-	if analyzer.state == "category" {
-		return analyzer.analizeCategory(token)
-	} else if analyzer.state == "hours" {
-		return analyzer.analizeHours(token)
-	} else if analyzer.state == "task" {
-		return analyzer.analizeTask(token)
-	} else if analyzer.state == "comment" {
-		analyzer.temp = append(analyzer.temp, token)
+type tokenAnalyzer struct {
+	*Parser
+	tokens []token
+	state  analyzerState
+	entry  *TimesheetEntry
+}
+
+func (analyzer *tokenAnalyzer) analyze(t token) (err error) {
+	switch analyzer.state {
+	case StateCategory:
+		return analyzer.analizeCategory(t)
+	case StateHours:
+		return analyzer.analizeHours(t)
+	case StateTask:
+		return analyzer.analizeTask(t)
+	case StateComment:
+		analyzer.tokens = append(analyzer.tokens, t)
+	default:
+		return fmt.Errorf("unknown analyzer state: %v", analyzer.state)
 	}
 	return nil
 }
 
 func (analyzer *tokenAnalyzer) finish() *TimesheetEntry {
 	var commentBuilder strings.Builder
-	for _, t := range analyzer.temp {
+	for _, t := range analyzer.tokens {
 		commentBuilder.WriteString(t.value())
 	}
 	analyzer.entry.Comment = strings.TrimSpace(commentBuilder.String())
@@ -64,41 +91,41 @@ func (analyzer *tokenAnalyzer) analizeTask(t token) error {
 		if analyzer.IsTask(word.Value) {
 			analyzer.entry.Task = &word.Value
 		} else {
-			analyzer.temp = append(analyzer.temp, t)
+			analyzer.tokens = append(analyzer.tokens, t)
 		}
 	} else {
-		analyzer.temp = append(analyzer.temp, t)
+		analyzer.tokens = append(analyzer.tokens, t)
 	}
-	analyzer.state = "comment"
+	analyzer.state = StateComment
 	return nil
 }
 
 func (analyzer *tokenAnalyzer) analizeCategory(t token) error {
 	if _, ok := t.(*space); ok {
-		if len(analyzer.temp) == 0 {
+		if len(analyzer.tokens) == 0 {
 			return ErrInvalidCategory
 		}
 		var categoryBuilder strings.Builder
-		for _, tt := range analyzer.temp {
+		for _, tt := range analyzer.tokens {
 			categoryBuilder.WriteString(tt.value())
 		}
 		potentialCategory := categoryBuilder.String()
 		if analyzer.IsCategory(potentialCategory) {
 			analyzer.entry.Category = potentialCategory
-			analyzer.state = "hours"
+			analyzer.state = StateHours
 			analyzer.resetTemp()
 		} else {
 			return ErrInvalidCategory
 		}
 
 	} else {
-		analyzer.temp = append(analyzer.temp, t)
+		analyzer.tokens = append(analyzer.tokens, t)
 	}
 	return nil
 }
 
 func (analyzer *tokenAnalyzer) resetTemp() {
-	analyzer.temp = make([]token, 0)
+	analyzer.tokens = make([]token, 0)
 }
 
 func invalidTime() error {
@@ -107,7 +134,7 @@ func invalidTime() error {
 }
 
 func (analyzer *tokenAnalyzer) analizeHours(t token) error {
-	temp := analyzer.temp
+	temp := analyzer.tokens
 	entry := analyzer.entry
 	if _, ok := t.(*space); ok {
 		if len(temp) == 0 {
@@ -156,7 +183,7 @@ func (analyzer *tokenAnalyzer) analizeHours(t token) error {
 					return invalidTime()
 				}
 			}
-			analyzer.state = "task"
+			analyzer.state = StateTask
 			return nil
 		}
 		if len(temp) == 3 {
@@ -181,13 +208,13 @@ func (analyzer *tokenAnalyzer) analizeHours(t token) error {
 			} else {
 				entry.Minutes = uint8(minutes.Value * 3 / 5)
 			}
-			analyzer.state = "task"
+			analyzer.state = StateTask
 			analyzer.resetTemp()
 			return nil
 		}
 		return invalidTime()
 	} else {
-		analyzer.temp = append(temp, t)
+		analyzer.tokens = append(temp, t)
 	}
 	return nil
 }
@@ -207,8 +234,8 @@ func (parser *Parser) doParseLine(line string) (WorkItem, error) {
 
 	analyzer := &tokenAnalyzer{
 		Parser: parser,
-		temp:   make([]token, 0),
-		state:  "category",
+		tokens: make([]token, 0),
+		state:  StateCategory,
 		entry:  &TimesheetEntry{},
 	}
 	for _, t := range tokens {
