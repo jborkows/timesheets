@@ -125,7 +125,7 @@ func (analyzer *tokenAnalyzer) analizeCategory(t token) error {
 }
 
 func (analyzer *tokenAnalyzer) resetTemp() {
-	analyzer.tokens = make([]token, 0)
+	analyzer.tokens = nil
 }
 
 func invalidTime() error {
