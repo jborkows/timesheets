@@ -23,6 +23,9 @@ jobs:
       - name: Run tests
         timeout-minutes: 5
         run: make tests
+      - name: Run vet
+        timeout-minutes: 10
+        run: go vet ./...
       - name: golangci-lint
         timeout-minutes: 5
         uses: golangci/golangci-lint-action@v6
