@@ -9,21 +9,11 @@ import (
 	"strings"
 )
 
-type EmptyLine struct {
-	Err error
-}
-
-func (e *EmptyLine) Error() string {
-	return fmt.Sprintf("%v", e.Err)
-}
-
-type InvalidCategory struct {
-	Err error
-}
-
-func (e *InvalidCategory) Error() string {
-	return fmt.Sprintf("%v", e.Err)
-}
+var (
+	ErrEmptyLine       = errors.New("empty line")
+	ErrInvalidCategory = errors.New("invalid category")
+	ErrInvalidTime     = errors.New("invalid time format. Use X.Y or XhYm (e.g., 1.5 or 1h30m)")
+)
 
 type Parser struct {
 	HolidayClassifier HolidayClassifier
@@ -86,7 +76,7 @@ func (analyzer *tokenAnalyzer) analizeTask(t token) error {
 func (analyzer *tokenAnalyzer) analizeCategory(t token) error {
 	if _, ok := t.(*space); ok {
 		if len(analyzer.temp) == 0 {
-			return &InvalidCategory{Err: errors.New("empty category")}
+			return ErrInvalidCategory
 		}
 		var categoryBuilder strings.Builder
 		for _, tt := range analyzer.temp {
@@ -98,7 +88,7 @@ func (analyzer *tokenAnalyzer) analizeCategory(t token) error {
 			analyzer.state = "hours"
 			analyzer.resetTemp()
 		} else {
-			return &InvalidCategory{Err: errors.New("invalid category")}
+			return ErrInvalidCategory
 		}
 
 	} else {
@@ -113,7 +103,7 @@ func (analyzer *tokenAnalyzer) resetTemp() {
 
 func invalidTime() error {
 	debug.PrintStack()
-	return &InvalidTime{Err: errors.New("invalid time use X.Y or XhYm e.g. 1.5 or 1h30m")}
+	return ErrInvalidTime
 }
 
 func (analyzer *tokenAnalyzer) analizeHours(t token) error {
@@ -205,7 +195,7 @@ func (analyzer *tokenAnalyzer) analizeHours(t token) error {
 func (parser *Parser) doParseLine(line string) (WorkItem, error) {
 	trimmedLine := strings.TrimSpace(line)
 	if trimmedLine == "" {
-		return nil, &EmptyLine{Err: errors.New("empty line")}
+		return nil, ErrEmptyLine
 	}
 	var debugMessage strings.Builder
 	tokens := tokenize(trimmedLine)

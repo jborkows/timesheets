@@ -47,9 +47,8 @@ func NewDatabase(filePath string) (*sql.DB, error) {
 	if err := optimize(db); err != nil {
 		return nil, fmt.Errorf("While optimizing %w", err)
 	}
-	row := db.QueryRow("SELECT sqlite_version() as version")
 	var version string
-	err = row.Scan(&version)
+	err = db.QueryRow("SELECT sqlite_version() as version").Scan(&version)
 	if err != nil {
 		log.Printf("Failed to get SQLite version: %v", err)
 	}
@@ -64,8 +63,7 @@ var migrationFiles embed.FS
 func runMigrations(db *sql.DB) error {
 	wd, err := os.Getwd()
 	if err != nil {
-		fmt.Println("Error getting working directory:", err)
-		return err
+		return fmt.Errorf("Error getting working directory: %w", err)
 	}
 	fmt.Println("Working directory:", wd)
 	d, err := iofs.New(migrationFiles, "schema/migrations")
@@ -109,8 +107,8 @@ func WithinTransaction(db *sql.DB, code func(tx *Queries) error) error {
 	txExecutor := executor.WithTx(tx)
 	err = code(txExecutor)
 	if err != nil {
-		if err = tx.Rollback(); err != nil {
-			return fmt.Errorf("While rolling back %w", err)
+		if rbErr := tx.Rollback(); rbErr != nil {
+			return fmt.Errorf("While rolling back (%w) %v", rbErr, err)
 		} else {
 			return fmt.Errorf("While running transaction %w", err)
 		}

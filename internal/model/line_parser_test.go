@@ -1,7 +1,6 @@
 package model_test
 
 import (
-	"errors"
 	"strings"
 	"testing"
 
@@ -21,11 +20,7 @@ func TestEmptyLineIsInvalid(t *testing.T) {
 	timesheet, err := parser.ParseLine(aDate())("")
 
 	assert.Nil(t, timesheet)
-	var error *model.EmptyLine
-	if errors.As(err, &error) {
-	} else {
-		t.Errorf("Expected error to be of type InvalidLine, got %v", err)
-	}
+	assert.Equal(t, model.ErrEmptyLine, err)
 }
 
 func TestHolidayIsValid(t *testing.T) {
@@ -116,14 +111,9 @@ func TestShouldParseTextWithDecimalAboveTwoPlaces(t *testing.T) {
 
 	parser := workingDayParser()
 	_, err := parser.ParseLine(aDate())("Category 1.753 Task-123 description")
-
-	var error *model.InvalidTime
-	if errors.As(err, &error) {
-	} else {
-		t.Errorf("Expected error to be of type InvalidTime, got %v", err)
-	}
-
+	assert.Equal(t, model.ErrInvalidTime, err)
 }
+
 func TestIfTaskCouldNottBeMatchedItBecameComment(t *testing.T) {
 	t.Parallel()
 	parser := workingDayParser()

@@ -28,8 +28,8 @@ func (support *TransactionSupport) WithTransaction(ctx context.Context, operatio
 	workUnit := support.queries.WithTx(tx)
 	err = operation(ctx, workUnit)
 	if err != nil {
-		if err := tx.Rollback(); err != nil {
-			return fmt.Errorf("failed to rollback transaction: %w", err)
+		if rbErr := tx.Rollback(); rbErr != nil {
+			return fmt.Errorf("failed to rollback transaction: %w (%v)", rbErr, err)
 		}
 		return fmt.Errorf("failed to run transaction: %w", err)
 	}
