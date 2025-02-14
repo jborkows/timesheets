@@ -9,6 +9,13 @@ import (
 	"github.com/jborkows/timesheets/internal/model"
 )
 
+type TimesheetStatus bool
+
+const (
+	Pending TimesheetStatus = true
+	Saved   TimesheetStatus = false
+)
+
 type impl struct {
 	queries  *Queries
 	overtime func(model.CategoryType) bool
@@ -26,7 +33,7 @@ func (repository *impl) Save(timesheet *model.Timesheet) error {
 	if err != nil {
 		return fmt.Errorf("failed to clear time sheet data: %w", err)
 	}
-	err = repository.saveTimeSheet(timesheet, "SAVED")
+	err = repository.saveTimeSheet(timesheet, Saved)
 	if err != nil {
 		return fmt.Errorf("failed to save time sheet: %w", err)
 	}
@@ -42,12 +49,11 @@ func (self *impl) PendingSave(timesheet *model.Timesheet) error {
 	if err != nil {
 		return fmt.Errorf("failed to clear pending: %w", err)
 	}
-	return self.saveTimeSheet(timesheet, "PENDING")
+	return self.saveTimeSheet(timesheet, Pending)
 }
 
-func (self *impl) saveTimeSheet(timesheet *model.Timesheet, pendingInput string) error {
-	pending := pendingInput == "PENDING"
-
+func (self *impl) saveTimeSheet(timesheet *model.Timesheet, state TimesheetStatus) error {
+	pending := state == Pending
 	err := self.queries.CreateTimesheet(context.TODO(), dayAsInteger(&timesheet.Date))
 	if err != nil {
 		return fmt.Errorf("failed to create time sheet: %w", err)
@@ -64,7 +70,6 @@ func (self *impl) saveTimeSheet(timesheet *model.Timesheet, pendingInput string)
 				return fmt.Errorf("failed to insert holiday: %w", err)
 			}
 		case *model.TimesheetEntry:
-
 			savingDate := AddEntryParams{
 				Holiday:       false,
 				Pending:       pending,
@@ -94,20 +99,15 @@ func (self *impl) Daily(knowsAboutDate model.KnowsAboutDate) ([]model.DailyStati
 	}
 	bucket := make(map[model.CategoryType]*model.DailyStatistic, len(values)/2+1)
 	for _, value := range values {
-		_, ok := bucket[value.Category]
 		overtime := self.overtime(model.CategoryType(value.Category))
-		if !ok {
+		if _, ok := bucket[value.Category]; !ok {
 			pointer := model.DailyStatistic{
 				Dirty: model.Statitic{
 					Category: value.Category,
-					Hours:    0,
-					Minutes:  0,
 					Overtime: overtime,
 				},
 				Daily: model.Statitic{
 					Category: value.Category,
-					Hours:    0,
-					Minutes:  0,
 					Overtime: overtime,
 				},
 			}
@@ -115,18 +115,13 @@ func (self *impl) Daily(knowsAboutDate model.KnowsAboutDate) ([]model.DailyStati
 			bucket[value.Category] = &pointer
 		}
 
-	}
-	for _, value := range values {
-		values, ok := bucket[value.Category]
-		if !ok {
-			panic("should not happen")
-		}
+		statistics := bucket[value.Category]
 		if value.Pending {
-			values.Dirty.Hours += uint8(value.Hours)
-			values.Dirty.Minutes += uint8(value.Minutes)
+			statistics.Dirty.Hours += uint8(value.Hours)
+			statistics.Dirty.Minutes += uint8(value.Minutes)
 		} else {
-			values.Daily.Hours += uint8(value.Hours)
-			values.Daily.Minutes += uint8(value.Minutes)
+			statistics.Daily.Hours += uint8(value.Hours)
+			statistics.Daily.Minutes += uint8(value.Minutes)
 		}
 
 	}
