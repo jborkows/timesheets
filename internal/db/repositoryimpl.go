@@ -53,37 +53,34 @@ func (self *impl) saveTimeSheet(timesheet *model.Timesheet, pendingInput string)
 		return fmt.Errorf("failed to create time sheet: %w", err)
 	}
 	for _, entry := range timesheet.Entries {
-		holiday, ok := entry.(*model.Holiday)
-		if ok {
+		switch e := entry.(type) {
+		case *model.Holiday:
 			err := self.queries.AddHoliday(context.TODO(), AddHolidayParams{
 				Holiday:       true,
 				Pending:       pending,
-				TimesheetDate: dayAsInteger(&holiday.Date),
+				TimesheetDate: dayAsInteger(&e.Date),
 			})
 			if err != nil {
 				return fmt.Errorf("failed to insert holiday: %w", err)
 			}
-			continue
-		}
-		entry, ok := entry.(*model.TimesheetEntry)
-		if !ok {
-			continue
-		}
-		savingDate := AddEntryParams{
-			Holiday:       false,
-			Pending:       pending,
-			TimesheetDate: dayAsInteger(&timesheet.Date),
-			Hours:         int64(entry.Hours),
-			Minutes:       int64(entry.Minutes),
-			Comment:       entry.Comment,
-			Task:          *entry.Task,
-			Category:      entry.Category,
-		}
-		err := self.queries.AddEntry(context.TODO(), savingDate)
-		fmt.Printf("saving entry: %v", savingDate)
+		case *model.TimesheetEntry:
 
-		if err != nil {
-			return fmt.Errorf("failed to insert pending: %w", err)
+			savingDate := AddEntryParams{
+				Holiday:       false,
+				Pending:       pending,
+				TimesheetDate: dayAsInteger(&timesheet.Date),
+				Hours:         int64(e.Hours),
+				Minutes:       int64(e.Minutes),
+				Comment:       e.Comment,
+				Task:          *e.Task,
+				Category:      e.Category,
+			}
+			err := self.queries.AddEntry(context.TODO(), savingDate)
+			fmt.Printf("saving entry: %v", savingDate)
+
+			if err != nil {
+				return fmt.Errorf("failed to insert pending: %w", err)
+			}
 		}
 	}
 	return nil
