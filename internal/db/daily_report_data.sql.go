@@ -9,6 +9,40 @@ import (
 	"context"
 )
 
+const findMonthlyStatistics = `-- name: FindMonthlyStatistics :many
+select month, pending, category, holiday, hours, minutes from monthly_report_data where month = ?1
+`
+
+func (q *Queries) FindMonthlyStatistics(ctx context.Context, date interface{}) ([]MonthlyReportDatum, error) {
+	rows, err := q.db.QueryContext(ctx, findMonthlyStatistics, date)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []MonthlyReportDatum
+	for rows.Next() {
+		var i MonthlyReportDatum
+		if err := rows.Scan(
+			&i.Month,
+			&i.Pending,
+			&i.Category,
+			&i.Holiday,
+			&i.Hours,
+			&i.Minutes,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const findStatistics = `-- name: FindStatistics :many
 select date, pending, category, holiday, hours, minutes from daily_report_data where date = ?1
 `

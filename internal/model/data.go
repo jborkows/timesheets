@@ -32,6 +32,7 @@ type WeeklyStatistic struct {
 type MonthlyStatistic struct {
 	Category      string
 	Monthly       Statitic
+	Dirty         Statitic
 	RequiredHours uint8
 }
 

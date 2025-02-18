@@ -203,3 +203,13 @@ func (t *Timesheet) Week() *Week {
 		EndDate:   *endOfWeek,
 	}
 }
+
+func (t *Timesheet) Month() *Month {
+	asTime := time.Time(t.Date)
+	firstOfMonth := time.Date(asTime.Year(), asTime.Month(), 1, 0, 0, 0, 0, time.UTC)
+	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
+	return &Month{
+		BeginDate: Day(firstOfMonth),
+		EndDate:   Day(lastOfMonth),
+	}
+}

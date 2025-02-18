@@ -13,6 +13,15 @@ type DailyReportDatum struct {
 	Minutes  int64
 }
 
+type MonthlyReportDatum struct {
+	Month    interface{}
+	Pending  bool
+	Category string
+	Holiday  bool
+	Hours    int64
+	Minutes  int64
+}
+
 type TimesheetDatum struct {
 	Date int64
 }
@@ -27,4 +36,5 @@ type TimesheetEntryDatum struct {
 	Comment       string
 	Task          string
 	Category      string
+	Month         interface{}
 }

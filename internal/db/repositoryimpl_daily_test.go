@@ -1,15 +1,10 @@
 package db_test
 
 import (
-	"context"
-	"log"
-	"os"
-	"testing"
-	"time"
-
-	dbp "github.com/jborkows/timesheets/internal/db"
 	"github.com/jborkows/timesheets/internal/model"
 	"github.com/stretchr/testify/assert"
+	"testing"
+	"time"
 )
 
 func TestShouldBeAbleToDisplayStatisticsForNoneData(t *testing.T) {
@@ -89,28 +84,4 @@ func TestShouldBeAbleToPresentDailyStatisticsSave(t *testing.T) {
 		assert.Equal(t, uint8(20), stat.Daily.Minutes, "Expected 20 minutes, got %d", stat.Daily.Minutes)
 
 	})
-}
-
-func useDb(t *testing.T, test func(saver model.Saver, querier model.Queryer)) {
-	t.Parallel()
-	tempFile, err := os.CreateTemp("", "testdb-*.db")
-	if err != nil {
-		log.Fatalf("Failed to create temporary file: %v", err)
-	}
-	defer cleanupFunc(tempFile)
-	db, err := dbp.NewDatabase(tempFile.Name())
-	if err != nil {
-		log.Fatalf("Failed to initialize database: %v", err)
-	}
-
-	support := dbp.NewTransactionSupport(db)
-	err = support.WithTransaction(context.Background(), func(ctx context.Context, q *dbp.Queries) error {
-		repository := dbp.Repository(q, func(model.CategoryType) bool { return false })
-		test(repository, repository)
-		return nil
-	})
-	if err != nil {
-		t.Errorf("Error in transaction: %v", err)
-	}
-
 }

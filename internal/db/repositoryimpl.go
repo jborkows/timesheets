@@ -136,8 +136,46 @@ func (repository *impl) Weekly(knowsAboutWeek model.KnowsAboutWeek) ([]model.Wee
 	return nil, nil
 }
 
-func (repository *impl) Monthly(knowsAboutMonth model.KnowsAboutMonth) ([]model.MonthlyStatistic, error) {
-	return nil, nil
+func (self *impl) Monthly(knowsAboutMonth model.KnowsAboutMonth) ([]model.MonthlyStatistic, error) {
+	month := knowsAboutMonth.Month()
+	values, err := self.queries.FindMonthlyStatistics(context.TODO(), dayAsInteger(&month.BeginDate)/100)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to find statistics: %w", err)
+	}
+	bucket := make(map[model.CategoryType]*model.MonthlyStatistic, len(values)/2+1)
+	for _, value := range values {
+		overtime := self.overtime(model.CategoryType(value.Category))
+		if _, ok := bucket[value.Category]; !ok {
+			pointer := model.MonthlyStatistic{
+				Dirty: model.Statitic{
+					Category: value.Category,
+					Overtime: overtime,
+				},
+				Monthly: model.Statitic{
+					Category: value.Category,
+					Overtime: overtime,
+				},
+			}
+
+			bucket[value.Category] = &pointer
+		}
+
+		statistics := bucket[value.Category]
+		if value.Pending {
+			statistics.Dirty.Hours += uint8(value.Hours)
+			statistics.Dirty.Minutes += uint8(value.Minutes)
+		} else {
+			statistics.Monthly.Hours += uint8(value.Hours)
+			statistics.Monthly.Minutes += uint8(value.Minutes)
+		}
+
+	}
+	bucketSlice := make([]model.MonthlyStatistic, 0, len(bucket))
+	for _, value := range bucket {
+		bucketSlice = append(bucketSlice, *value)
+	}
+	return bucketSlice, nil
 }
 
 func dayAsInteger(d *model.Day) int64 {
