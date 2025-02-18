@@ -22,6 +22,9 @@ failed-tests:
 	@go test ./... -v -race -shuffle=on -json | jq '.|select(.Action=="fail" and .Test!=null)'
 generate:
 	@sqlc generate -f ./config/sqlc.yaml
+testDb:
+	@sqlc generate -f ./config/sqlc.yaml
+	@migrate -database "sqlite3://./temp/timesheets.db?journal_mode=WAL&foreign_keys=true&cache_size=2000" -path ./internal/db/schema/migrations up
 migrate:
 	@migrate -database "sqlite3://./timesheets.db?journal_mode=WAL&foreign_keys=true&cache_size=2000" -path db/migrations up
 	@sqlc generate -f ./config/sqlc.yaml
