@@ -28,6 +28,10 @@ func Repository(queries *Queries, overtime func(model.CategoryType) bool) *impl 
 	}
 }
 
+/*
+*
+TODO: move context as a parameter
+*/
 func (repository *impl) Save(timesheet *model.Timesheet) error {
 	err := repository.queries.ClearTimesheetData(context.TODO(), dayAsInteger(&timesheet.Date))
 	if err != nil {
@@ -54,7 +58,11 @@ func (self *impl) PendingSave(timesheet *model.Timesheet) error {
 
 func (self *impl) saveTimeSheet(timesheet *model.Timesheet, state TimesheetStatus) error {
 	pending := state == Pending
-	err := self.queries.CreateTimesheet(context.TODO(), dayAsInteger(&timesheet.Date))
+	err := self.queries.CreateTimesheet(context.TODO(), CreateTimesheetParams{
+		Date:      dayAsInteger(&timesheet.Date),
+		WeekStart: dayAsInteger(&timesheet.Week().BeginDate),
+		WeekEnd:   dayAsInteger(&timesheet.Week().EndDate),
+	})
 	if err != nil {
 		return fmt.Errorf("failed to create time sheet: %w", err)
 	}
@@ -95,7 +103,7 @@ func (self *impl) Daily(knowsAboutDate model.KnowsAboutDate) ([]model.DailyStati
 	values, err := self.queries.FindStatistics(context.TODO(), dayAsInteger(knowsAboutDate.Day()))
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to find statistics: %w", err)
+		return nil, fmt.Errorf("failed to find statistics: %w for %v", err, knowsAboutDate)
 	}
 	bucket := make(map[model.CategoryType]*model.DailyStatistic, len(values)/2+1)
 	for _, value := range values {
@@ -132,8 +140,49 @@ func (self *impl) Daily(knowsAboutDate model.KnowsAboutDate) ([]model.DailyStati
 	return bucketSlice, nil
 }
 
-func (repository *impl) Weekly(knowsAboutWeek model.KnowsAboutWeek) ([]model.WeeklyStatistic, error) {
-	return nil, nil
+func (self *impl) Weekly(knowsAboutWeek model.KnowsAboutWeek) ([]model.WeeklyStatistic, error) {
+	week := knowsAboutWeek.Week()
+	values, err := self.queries.FindWeeklyStatistics(context.TODO(), FindWeeklyStatisticsParams{
+		StartDate: dayAsInteger(&week.BeginDate),
+		EndDate:   dayAsInteger(&week.EndDate),
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to find statistics: %w for %v", err, knowsAboutWeek)
+	}
+	bucket := make(map[model.CategoryType]*model.WeeklyStatistic, len(values)/2+1)
+	for _, value := range values {
+		overtime := self.overtime(model.CategoryType(value.Category))
+		if _, ok := bucket[value.Category]; !ok {
+			pointer := model.WeeklyStatistic{
+				Dirty: model.Statitic{
+					Category: value.Category,
+					Overtime: overtime,
+				},
+				Weekly: model.Statitic{
+					Category: value.Category,
+					Overtime: overtime,
+				},
+			}
+
+			bucket[value.Category] = &pointer
+		}
+
+		statistics := bucket[value.Category]
+		if value.Pending {
+			statistics.Dirty.Hours += uint8(value.Hours)
+			statistics.Dirty.Minutes += uint8(value.Minutes)
+		} else {
+			statistics.Weekly.Hours += uint8(value.Hours)
+			statistics.Weekly.Minutes += uint8(value.Minutes)
+		}
+
+	}
+	bucketSlice := make([]model.WeeklyStatistic, 0, len(bucket))
+	for _, value := range bucket {
+		bucketSlice = append(bucketSlice, *value)
+	}
+	return bucketSlice, nil
 }
 
 func (self *impl) Monthly(knowsAboutMonth model.KnowsAboutMonth) ([]model.MonthlyStatistic, error) {

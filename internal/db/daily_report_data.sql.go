@@ -76,3 +76,43 @@ func (q *Queries) FindStatistics(ctx context.Context, date int64) ([]DailyReport
 	}
 	return items, nil
 }
+
+const findWeeklyStatistics = `-- name: FindWeeklyStatistics :many
+select week_begin_date, week_end_date, pending, category, holiday, hours, minutes from weekly_report_data where week_begin_date = ?1 and week_end_date = ?2
+`
+
+type FindWeeklyStatisticsParams struct {
+	StartDate int64
+	EndDate   int64
+}
+
+func (q *Queries) FindWeeklyStatistics(ctx context.Context, arg FindWeeklyStatisticsParams) ([]WeeklyReportDatum, error) {
+	rows, err := q.db.QueryContext(ctx, findWeeklyStatistics, arg.StartDate, arg.EndDate)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []WeeklyReportDatum
+	for rows.Next() {
+		var i WeeklyReportDatum
+		if err := rows.Scan(
+			&i.WeekBeginDate,
+			&i.WeekEndDate,
+			&i.Pending,
+			&i.Category,
+			&i.Holiday,
+			&i.Hours,
+			&i.Minutes,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

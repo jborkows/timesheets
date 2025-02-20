@@ -23,7 +23,9 @@ type MonthlyReportDatum struct {
 }
 
 type TimesheetDatum struct {
-	Date int64
+	Date          int64
+	WeekBeginDate int64
+	WeekEndDate   int64
 }
 
 type TimesheetEntryDatum struct {
@@ -37,4 +39,14 @@ type TimesheetEntryDatum struct {
 	Task          string
 	Category      string
 	Month         interface{}
+}
+
+type WeeklyReportDatum struct {
+	WeekBeginDate int64
+	WeekEndDate   int64
+	Pending       bool
+	Category      string
+	Holiday       bool
+	Hours         int64
+	Minutes       int64
 }

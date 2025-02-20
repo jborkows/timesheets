@@ -10,20 +10,27 @@ import (
 )
 
 const createTimesheet = `-- name: CreateTimesheet :exec
-INSERT or IGNORE INTO timesheet_data (date) VALUES (?1)
+INSERT or IGNORE INTO timesheet_data (date,week_begin_date,week_end_date) VALUES (?1,?2,?3)
 `
 
-func (q *Queries) CreateTimesheet(ctx context.Context, date int64) error {
-	_, err := q.db.ExecContext(ctx, createTimesheet, date)
+type CreateTimesheetParams struct {
+	Date      int64
+	WeekStart int64
+	WeekEnd   int64
+}
+
+func (q *Queries) CreateTimesheet(ctx context.Context, arg CreateTimesheetParams) error {
+	_, err := q.db.ExecContext(ctx, createTimesheet, arg.Date, arg.WeekStart, arg.WeekEnd)
 	return err
 }
 
 const findTimesheet = `-- name: FindTimesheet :one
-SELECT date FROM timesheet_data WHERE date = (?1)
+SELECT date, week_begin_date, week_end_date FROM timesheet_data WHERE date = (?1)
 `
 
-func (q *Queries) FindTimesheet(ctx context.Context, date int64) (int64, error) {
+func (q *Queries) FindTimesheet(ctx context.Context, date int64) (TimesheetDatum, error) {
 	row := q.db.QueryRowContext(ctx, findTimesheet, date)
-	err := row.Scan(&date)
-	return date, err
+	var i TimesheetDatum
+	err := row.Scan(&i.Date, &i.WeekBeginDate, &i.WeekEndDate)
+	return i, err
 }
