@@ -1,6 +1,7 @@
 package db_test
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"testing"
@@ -21,7 +22,7 @@ func TestShouldBeAbleToPresentWeeklyStatisticsPending(t *testing.T) {
 		sunday := time.Date(2025, time.February, 16, 0, 0, 0, 0, time.UTC)
 		saveWorkTimeSheet(t, sunday, saver)
 
-		statistics, err := query.Weekly(model.TimesheetForDate(sunday))
+		statistics, err := query.Weekly(context.Background(), model.TimesheetForDate(sunday))
 		if err != nil {
 			t.Errorf("Error getting daily statistics: %v", err)
 		}
@@ -29,7 +30,7 @@ func TestShouldBeAbleToPresentWeeklyStatisticsPending(t *testing.T) {
 		stat := statistics[0]
 		assert.Equal(t, testWorkHours, stat.Weekly.Hours, "Expected 4 hours, got %d", stat.Weekly.Hours)
 
-		statistics, err = query.Weekly(model.TimesheetForDate(monday))
+		statistics, err = query.Weekly(context.Background(), model.TimesheetForDate(monday))
 		if err != nil {
 			t.Errorf("Error getting daily statistics: %v", err)
 		}
@@ -47,7 +48,7 @@ func TestShouldBeAbleToPresentMonthlyStatisticsPending(t *testing.T) {
 		saveWorkTimeSheet(t, time.Date(2025, time.February, 18, 0, 0, 0, 0, time.UTC), saver)
 		saveWorkTimeSheet(t, time.Date(2025, time.February, 19, 0, 0, 0, 0, time.UTC), saver)
 
-		statistics, err := query.Monthly(model.TimesheetForDate(monday))
+		statistics, err := query.Monthly(context.Background(), model.TimesheetForDate(monday))
 		if err != nil {
 			t.Errorf("Error getting daily statistics: %v", err)
 		}
@@ -67,7 +68,7 @@ func saveWorkTimeSheet(t *testing.T, time time.Time, saver model.Saver) *model.T
 		assert.FailNow(t, fmt.Sprintf("Error adding entry: %v", error))
 		log.Printf("Added entry failed: %v %v", entry, error)
 	}
-	saveError := saver.Save(timesheet)
+	saveError := saver.Save(context.Background(), timesheet)
 	if saveError != nil {
 		assert.FailNow(t, fmt.Sprintf("Error saving time sheet: %v", saveError))
 		log.Printf("Added entry failed (failed): %v %v", entry, saveError)

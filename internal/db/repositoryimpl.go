@@ -28,37 +28,33 @@ func Repository(queries *Queries, overtime func(model.CategoryType) bool) *impl 
 	}
 }
 
-/*
-*
-TODO: move context as a parameter
-*/
-func (repository *impl) Save(timesheet *model.Timesheet) error {
-	err := repository.queries.ClearTimesheetData(context.TODO(), dayAsInteger(&timesheet.Date))
+func (repository *impl) Save(ctx context.Context, timesheet *model.Timesheet) error {
+	err := repository.queries.ClearTimesheetData(ctx, dayAsInteger(&timesheet.Date))
 	if err != nil {
 		return fmt.Errorf("failed to clear time sheet data: %w", err)
 	}
-	err = repository.saveTimeSheet(timesheet, Saved)
+	err = repository.saveTimeSheet(ctx, timesheet, Saved)
 	if err != nil {
 		return fmt.Errorf("failed to save time sheet: %w", err)
 	}
-	err = repository.PendingSave(timesheet)
+	err = repository.PendingSave(ctx, timesheet)
 	if err != nil {
 		return fmt.Errorf("failed to save pending: %w", err)
 	}
 	return nil
 }
 
-func (self *impl) PendingSave(timesheet *model.Timesheet) error {
-	err := self.queries.ClearPending(context.TODO(), dayAsInteger(&timesheet.Date))
+func (self *impl) PendingSave(ctx context.Context, timesheet *model.Timesheet) error {
+	err := self.queries.ClearPending(ctx, dayAsInteger(&timesheet.Date))
 	if err != nil {
 		return fmt.Errorf("failed to clear pending: %w", err)
 	}
-	return self.saveTimeSheet(timesheet, Pending)
+	return self.saveTimeSheet(ctx, timesheet, Pending)
 }
 
-func (self *impl) saveTimeSheet(timesheet *model.Timesheet, state TimesheetStatus) error {
+func (self *impl) saveTimeSheet(ctx context.Context, timesheet *model.Timesheet, state TimesheetStatus) error {
 	pending := state == Pending
-	err := self.queries.CreateTimesheet(context.TODO(), CreateTimesheetParams{
+	err := self.queries.CreateTimesheet(ctx, CreateTimesheetParams{
 		Date:      dayAsInteger(&timesheet.Date),
 		WeekStart: dayAsInteger(&timesheet.Week().BeginDate),
 		WeekEnd:   dayAsInteger(&timesheet.Week().EndDate),
@@ -69,7 +65,7 @@ func (self *impl) saveTimeSheet(timesheet *model.Timesheet, state TimesheetStatu
 	for _, entry := range timesheet.Entries {
 		switch e := entry.(type) {
 		case *model.Holiday:
-			err := self.queries.AddHoliday(context.TODO(), AddHolidayParams{
+			err := self.queries.AddHoliday(ctx, AddHolidayParams{
 				Holiday:       true,
 				Pending:       pending,
 				TimesheetDate: dayAsInteger(&e.Date),
@@ -88,7 +84,7 @@ func (self *impl) saveTimeSheet(timesheet *model.Timesheet, state TimesheetStatu
 				Task:          *e.Task,
 				Category:      e.Category,
 			}
-			err := self.queries.AddEntry(context.TODO(), savingDate)
+			err := self.queries.AddEntry(ctx, savingDate)
 			fmt.Printf("saving entry: %v", savingDate)
 
 			if err != nil {
@@ -158,7 +154,7 @@ func groupData[T any, V any](params structDataParams[T, V]) []V {
 	return bucketSlice
 }
 
-func (self *impl) Daily(knowsAboutDate model.KnowsAboutDate) ([]model.DailyStatistic, error) {
+func (self *impl) Daily(ctx context.Context, knowsAboutDate model.KnowsAboutDate) ([]model.DailyStatistic, error) {
 	values, err := self.queries.FindStatistics(context.TODO(), dayAsInteger(knowsAboutDate.Day()))
 
 	if err != nil {
@@ -185,7 +181,7 @@ func (self *impl) Daily(knowsAboutDate model.KnowsAboutDate) ([]model.DailyStati
 	return result, nil
 }
 
-func (self *impl) Weekly(knowsAboutWeek model.KnowsAboutWeek) ([]model.WeeklyStatistic, error) {
+func (self *impl) Weekly(ctx context.Context, knowsAboutWeek model.KnowsAboutWeek) ([]model.WeeklyStatistic, error) {
 	week := knowsAboutWeek.Week()
 	values, err := self.queries.FindWeeklyStatistics(context.TODO(), FindWeeklyStatisticsParams{
 		StartDate: dayAsInteger(&week.BeginDate),
@@ -217,7 +213,7 @@ func (self *impl) Weekly(knowsAboutWeek model.KnowsAboutWeek) ([]model.WeeklySta
 	return result, nil
 }
 
-func (self *impl) Monthly(knowsAboutMonth model.KnowsAboutMonth) ([]model.MonthlyStatistic, error) {
+func (self *impl) Monthly(ctx context.Context, knowsAboutMonth model.KnowsAboutMonth) ([]model.MonthlyStatistic, error) {
 	month := knowsAboutMonth.Month()
 	values, err := self.queries.FindMonthlyStatistics(context.TODO(), dayAsInteger(&month.BeginDate)/100)
 

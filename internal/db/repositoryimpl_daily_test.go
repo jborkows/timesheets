@@ -1,17 +1,19 @@
 package db_test
 
 import (
-	"github.com/jborkows/timesheets/internal/model"
-	"github.com/stretchr/testify/assert"
+	"context"
 	"testing"
 	"time"
+
+	"github.com/jborkows/timesheets/internal/model"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestShouldBeAbleToDisplayStatisticsForNoneData(t *testing.T) {
 	useDb(t, func(saver model.Saver, query model.Queryer) {
 		timesheet := model.TimesheetForDate(time.Now())
 
-		statistics, err := query.Daily(timesheet)
+		statistics, err := query.Daily(context.Background(), timesheet)
 		if err != nil {
 			t.Errorf("Error getting daily statistics: %v", err)
 		}
@@ -30,11 +32,11 @@ func TestShouldBeAbleToPresentDailyStatisticsPendingThenSave(t *testing.T) {
 		if error := timesheet.AddEntry(entry); error != nil {
 			t.Errorf("Error adding entry: %v", error)
 		}
-		saveError := saver.PendingSave(timesheet)
+		saveError := saver.PendingSave(context.Background(), timesheet)
 		if saveError != nil {
 			t.Errorf("Error pending saving time sheet: %v", saveError)
 		}
-		statistics, err := query.Daily(timesheet)
+		statistics, err := query.Daily(context.Background(), timesheet)
 		if err != nil {
 			t.Errorf("Error getting daily statistics: %v", err)
 		}
@@ -43,12 +45,12 @@ func TestShouldBeAbleToPresentDailyStatisticsPendingThenSave(t *testing.T) {
 		assert.Equal(t, uint8(4), stat.Dirty.Hours, "Expected 4 hours, got %d", stat.Dirty.Hours)
 		assert.Equal(t, uint8(0), stat.Daily.Hours, "Expected 0 hours, got %d", stat.Daily.Hours)
 
-		saveError = saver.Save(timesheet)
+		saveError = saver.Save(context.Background(), timesheet)
 		if saveError != nil {
 			t.Errorf("Error saving time sheet: %v", saveError)
 		}
 
-		statistics, err = query.Daily(timesheet)
+		statistics, err = query.Daily(context.Background(), timesheet)
 		if err != nil {
 			t.Errorf("Error getting daily statistics: %v", err)
 		}
@@ -68,11 +70,11 @@ func TestShouldBeAbleToPresentDailyStatisticsSave(t *testing.T) {
 		if error := timesheet.AddEntry(entry); error != nil {
 			t.Errorf("Error adding entry: %v", error)
 		}
-		saveError := saver.Save(timesheet)
+		saveError := saver.Save(context.Background(), timesheet)
 		if saveError != nil {
 			t.Errorf("Error pending saving time sheet: %v", saveError)
 		}
-		statistics, err := query.Daily(timesheet)
+		statistics, err := query.Daily(context.Background(), timesheet)
 		if err != nil {
 			t.Errorf("Error getting daily statistics: %v", err)
 		}
