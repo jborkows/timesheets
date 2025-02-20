@@ -1,2 +1,4 @@
-# Template for creating go projects
-Template to create a go project with a Makefile and air for hot reloading.
+# TLDR
+LSP server/client for time sheet management.
+Each day is new file.
+
