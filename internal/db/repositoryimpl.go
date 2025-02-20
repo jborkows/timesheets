@@ -99,22 +99,39 @@ func (self *impl) saveTimeSheet(timesheet *model.Timesheet, state TimesheetStatu
 	return nil
 }
 
-func (self *impl) Daily(knowsAboutDate model.KnowsAboutDate) ([]model.DailyStatistic, error) {
-	values, err := self.queries.FindStatistics(context.TODO(), dayAsInteger(knowsAboutDate.Day()))
+type selectOutput struct {
+	Category string
+	Hours    int64
+	Minutes  int64
+	Pending  bool
+}
 
-	if err != nil {
-		return nil, fmt.Errorf("failed to find statistics: %w for %v", err, knowsAboutDate)
-	}
-	bucket := make(map[model.CategoryType]*model.DailyStatistic, len(values)/2+1)
-	for _, value := range values {
+type dirtyWithData struct {
+	Dirty model.Statitic
+	Data  model.Statitic
+}
+
+type structDataParams[T any, V any] struct {
+	self     *impl
+	data     []T
+	toSelect func(entry T) selectOutput
+	toModel  func(entry *dirtyWithData) V
+}
+
+func groupData[T any, V any](params structDataParams[T, V]) []V {
+	self := params.self
+	data := params.data
+	bucket := make(map[model.CategoryType]*dirtyWithData, len(data)/2+1)
+	for _, input := range data {
+		value := params.toSelect(input)
 		overtime := self.overtime(model.CategoryType(value.Category))
 		if _, ok := bucket[value.Category]; !ok {
-			pointer := model.DailyStatistic{
+			pointer := dirtyWithData{
 				Dirty: model.Statitic{
 					Category: value.Category,
 					Overtime: overtime,
 				},
-				Daily: model.Statitic{
+				Data: model.Statitic{
 					Category: value.Category,
 					Overtime: overtime,
 				},
@@ -128,16 +145,44 @@ func (self *impl) Daily(knowsAboutDate model.KnowsAboutDate) ([]model.DailyStati
 			statistics.Dirty.Hours += uint8(value.Hours)
 			statistics.Dirty.Minutes += uint8(value.Minutes)
 		} else {
-			statistics.Daily.Hours += uint8(value.Hours)
-			statistics.Daily.Minutes += uint8(value.Minutes)
+			statistics.Data.Hours += uint8(value.Hours)
+			statistics.Data.Minutes += uint8(value.Minutes)
 		}
+	}
 
+	bucketSlice := make([]V, 0, len(bucket))
+	for _, input := range bucket {
+		value := params.toModel(input)
+		bucketSlice = append(bucketSlice, value)
 	}
-	bucketSlice := make([]model.DailyStatistic, 0, len(bucket))
-	for _, value := range bucket {
-		bucketSlice = append(bucketSlice, *value)
+	return bucketSlice
+}
+
+func (self *impl) Daily(knowsAboutDate model.KnowsAboutDate) ([]model.DailyStatistic, error) {
+	values, err := self.queries.FindStatistics(context.TODO(), dayAsInteger(knowsAboutDate.Day()))
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to find statistics: %w for %v", err, knowsAboutDate)
 	}
-	return bucketSlice, nil
+	result := groupData[DailyReportDatum, model.DailyStatistic](structDataParams[DailyReportDatum, model.DailyStatistic]{
+		self: self,
+		data: values,
+		toSelect: func(entry DailyReportDatum) selectOutput {
+			return selectOutput{
+				Category: entry.Category,
+				Hours:    entry.Hours,
+				Minutes:  entry.Minutes,
+				Pending:  entry.Pending,
+			}
+		},
+		toModel: func(entry *dirtyWithData) model.DailyStatistic {
+			return model.DailyStatistic{
+				Dirty: entry.Dirty,
+				Daily: entry.Data,
+			}
+		},
+	})
+	return result, nil
 }
 
 func (self *impl) Weekly(knowsAboutWeek model.KnowsAboutWeek) ([]model.WeeklyStatistic, error) {
@@ -150,39 +195,26 @@ func (self *impl) Weekly(knowsAboutWeek model.KnowsAboutWeek) ([]model.WeeklySta
 	if err != nil {
 		return nil, fmt.Errorf("failed to find statistics: %w for %v", err, knowsAboutWeek)
 	}
-	bucket := make(map[model.CategoryType]*model.WeeklyStatistic, len(values)/2+1)
-	for _, value := range values {
-		overtime := self.overtime(model.CategoryType(value.Category))
-		if _, ok := bucket[value.Category]; !ok {
-			pointer := model.WeeklyStatistic{
-				Dirty: model.Statitic{
-					Category: value.Category,
-					Overtime: overtime,
-				},
-				Weekly: model.Statitic{
-					Category: value.Category,
-					Overtime: overtime,
-				},
+
+	result := groupData[WeeklyReportDatum, model.WeeklyStatistic](structDataParams[WeeklyReportDatum, model.WeeklyStatistic]{
+		self: self,
+		data: values,
+		toSelect: func(entry WeeklyReportDatum) selectOutput {
+			return selectOutput{
+				Category: entry.Category,
+				Hours:    entry.Hours,
+				Minutes:  entry.Minutes,
+				Pending:  entry.Pending,
 			}
-
-			bucket[value.Category] = &pointer
-		}
-
-		statistics := bucket[value.Category]
-		if value.Pending {
-			statistics.Dirty.Hours += uint8(value.Hours)
-			statistics.Dirty.Minutes += uint8(value.Minutes)
-		} else {
-			statistics.Weekly.Hours += uint8(value.Hours)
-			statistics.Weekly.Minutes += uint8(value.Minutes)
-		}
-
-	}
-	bucketSlice := make([]model.WeeklyStatistic, 0, len(bucket))
-	for _, value := range bucket {
-		bucketSlice = append(bucketSlice, *value)
-	}
-	return bucketSlice, nil
+		},
+		toModel: func(entry *dirtyWithData) model.WeeklyStatistic {
+			return model.WeeklyStatistic{
+				Dirty:  entry.Dirty,
+				Weekly: entry.Data,
+			}
+		},
+	})
+	return result, nil
 }
 
 func (self *impl) Monthly(knowsAboutMonth model.KnowsAboutMonth) ([]model.MonthlyStatistic, error) {
@@ -192,39 +224,25 @@ func (self *impl) Monthly(knowsAboutMonth model.KnowsAboutMonth) ([]model.Monthl
 	if err != nil {
 		return nil, fmt.Errorf("failed to find statistics: %w", err)
 	}
-	bucket := make(map[model.CategoryType]*model.MonthlyStatistic, len(values)/2+1)
-	for _, value := range values {
-		overtime := self.overtime(model.CategoryType(value.Category))
-		if _, ok := bucket[value.Category]; !ok {
-			pointer := model.MonthlyStatistic{
-				Dirty: model.Statitic{
-					Category: value.Category,
-					Overtime: overtime,
-				},
-				Monthly: model.Statitic{
-					Category: value.Category,
-					Overtime: overtime,
-				},
+	result := groupData[MonthlyReportDatum, model.MonthlyStatistic](structDataParams[MonthlyReportDatum, model.MonthlyStatistic]{
+		self: self,
+		data: values,
+		toSelect: func(entry MonthlyReportDatum) selectOutput {
+			return selectOutput{
+				Category: entry.Category,
+				Hours:    entry.Hours,
+				Minutes:  entry.Minutes,
+				Pending:  entry.Pending,
 			}
-
-			bucket[value.Category] = &pointer
-		}
-
-		statistics := bucket[value.Category]
-		if value.Pending {
-			statistics.Dirty.Hours += uint8(value.Hours)
-			statistics.Dirty.Minutes += uint8(value.Minutes)
-		} else {
-			statistics.Monthly.Hours += uint8(value.Hours)
-			statistics.Monthly.Minutes += uint8(value.Minutes)
-		}
-
-	}
-	bucketSlice := make([]model.MonthlyStatistic, 0, len(bucket))
-	for _, value := range bucket {
-		bucketSlice = append(bucketSlice, *value)
-	}
-	return bucketSlice, nil
+		},
+		toModel: func(entry *dirtyWithData) model.MonthlyStatistic {
+			return model.MonthlyStatistic{
+				Dirty:   entry.Dirty,
+				Monthly: entry.Data,
+			}
+		},
+	})
+	return result, nil
 }
 
 func dayAsInteger(d *model.Day) int64 {
