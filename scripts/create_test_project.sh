@@ -4,10 +4,10 @@ base_dir_full=$(realpath $base_dir)
 echo $base_dir_full
 project_root=$(realpath $base_dir_full/..)
 application_exe=${project_root}/tmp/main
-test_project_dir="/tmp/test_project"
+test_project_dir="/mnt/ramdisk/test_project"
 rm -rf $test_project_dir
 mkdir -p $test_project_dir
-cat << EOF > /tmp/test_project/.nvimrc.lua
+cat << EOF > ${test_project_dir}/.nvimrc.lua
 vim.filetype.add({
   extension = {
     tsf = "timesheet"
@@ -26,15 +26,16 @@ lspconfig.timesheet_lsp.setup({
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "timesheet",
   callback = function()
+    local root_dir = lspconfig.util.root_pattern(".git")(vim.fn.expand("%:p")) or vim.fn.getcwd()
     vim.lsp.start({
       name = "timesheet_lsp",
-      cmd = {"$application_exe", "-c", "$test_project_dir/config.toml"},
-      root_dir = require("lspconfig.util").root_pattern(".git")(vim.fn.expand("%:p")) or vim.fn.getcwd(),
+      cmd = {"$application_exe", "-c", "$test_project_dir/config.toml", "--project-root", root_dir},
+      root_dir = root_dir,
     })
   end,
 })
 EOF
-cat << EOF > /tmp/test_project/config.toml
+cat << EOF > $test_project_dir/config.toml
 [categories]
 regular=["categoryA", "categoryB"]
 overtime=["overtimeA"]

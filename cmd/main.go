@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"os/signal"
@@ -26,6 +25,7 @@ func main() {
 	var versionFlag = flag.Bool("version", false, "Print version")
 	var configFlag = flag.String("c", "", "Path to config file")
 	var reloadFlag = flag.Bool("lsptesting", false, "For air and lsp testing")
+	var projectRootFlag = flag.String("project-root", "", "Project root")
 	flag.Parse()
 	if *versionFlag {
 		fmt.Printf("Version: %s", model.Version)
@@ -44,6 +44,11 @@ func main() {
 		log.Fatalf("Error opening file: %v", err)
 	}
 	defer file.Close()
+	if *projectRootFlag != "" {
+		log.Println("Project root is set to", *projectRootFlag)
+	} else {
+		log.Fatal("Project root is required")
+	}
 	config, err := model.ReadConfig(file)
 
 	log.Printf("Config: %+v", config)
@@ -51,6 +56,10 @@ func main() {
 		log.Fatalf("Error reading config file: %s", err)
 	}
 
+	controller := lspserver.NewController(&lspserver.ControllerConfig{
+		ProjectRoot: *projectRootFlag,
+		Config:      config,
+	})
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Split(rpc.Split)
 
@@ -62,8 +71,8 @@ func main() {
 			log.Printf("Got an error: %s", err)
 			continue
 		}
+		controller.HandleMessage(writer, method, contents)
 
-		handleMessage(writer, method, contents)
 	}
 }
 
@@ -73,22 +82,4 @@ func waitForTerminationSignal() {
 	fmt.Println("Waiting for SIGINT or SIGTERM...")
 	sig := <-sigChan
 	fmt.Printf("Received signal: %v\n", sig)
-}
-
-func handleMessage(writer io.Writer, method string, contents []byte) {
-	response, err := lspserver.Route(method, contents)
-	if err != nil {
-		log.Printf("Got an error: %s", err)
-		return
-	}
-	if response != nil {
-		log.Printf("Sending response for %s", method)
-		writeResponse(writer, response)
-	}
-}
-
-func writeResponse(writer io.Writer, msg any) {
-	reply := rpc.EncodeMessage(msg)
-	writer.Write([]byte(reply))
-
 }
