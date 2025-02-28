@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+	"slices"
 )
 
 type categories struct {
@@ -39,10 +40,8 @@ func ReadConfig(r io.Reader) (*Config, error) {
 }
 
 func (config *Config) IsHoliday(info *DateInfo) bool {
-	for _, addHoc := range config.Holidays.AddHoc {
-		if addHoc == info.Value {
-			return true
-		}
+	if slices.Contains(config.Holidays.AddHoc, info.Value) {
+		return true
 	}
 	for _, repeatable := range config.Holidays.Repeatable {
 		if !(len(info.Value) == len("2024-12-24")) {
@@ -56,12 +55,7 @@ func (config *Config) IsHoliday(info *DateInfo) bool {
 }
 
 func insideOfCategory(category string, categories []string) bool {
-	for _, c := range categories {
-		if c == category {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(categories, category)
 }
 
 func (config *Config) IsCategory(category string) bool {
@@ -92,3 +86,5 @@ func (config *Config) IsTask(text string) bool {
 
 	return true
 }
+
+const Version = "0.0.1"

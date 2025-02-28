@@ -1,7 +1,8 @@
-.PHONY: run tests tests-json failed-tests create_test_project migrate short-tests short-tests-details generate
+.PHONY: run tests tests-json failed-tests create_test_project migrate short-tests short-tests-details generate create_test_project
 
 run:
-	@air -c ./config/air.toml 
+	@ulimit -n 4096
+	@air -c ./config/air.toml -- -lsptesting
 build:
 	@go build -o bin/timesheets cmd/main.go
 tests: generate
@@ -28,4 +29,6 @@ testDb:
 migrate:
 	@migrate -database "sqlite3://./timesheets.db?journal_mode=WAL&foreign_keys=true&cache_size=2000" -path db/migrations up
 	@sqlc generate -f ./config/sqlc.yaml
+create_test_project:
+	bash ./scripts/create_test_project.sh
 
