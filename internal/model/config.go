@@ -92,3 +92,4 @@ func (config *Config) IsTask(text string) bool {
 }
 
 const Version = "0.0.1"
+const TimeSheetExtension = ".tsf"

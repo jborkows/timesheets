@@ -51,6 +51,7 @@ func (self *Controller) onSave(msg *messages.DidSaveTextDocumentNotification) {
 type parsingTextParams struct {
 	text string
 	uri  string
+	date time.Time
 }
 type lineError struct {
 	lineNumber int
@@ -59,12 +60,9 @@ type lineError struct {
 }
 
 func (self *Controller) parseText(input parsingTextParams) []model.WorkItem {
-
 	var workItems []model.WorkItem = nil
 	var errors []lineError = nil
-
-	//TODO: pass date as parameter, extract from URI
-	dateInfo := model.DateInfo{Value: "2021-01-05"}
+	dateInfo := model.DateInfo{Value: input.date.Format("2006-01-02")}
 	parseLine := self.parser.ParseLine(dateInfo)
 	lines := strings.Split(input.text, "\n")
 	for counter, line := range lines {
@@ -88,9 +86,12 @@ func (self *Controller) parseText(input parsingTextParams) []model.WorkItem {
 func reactOnChange(msg *messages.TextDocumentDidChangeNotification, c *Controller) {
 	text := msg.Params.ContentChanges[0].Text
 	//TODO: use workItems
-	//TODO: extract date from URI and pass it to parser
-	c.parseText(parsingTextParams{text, msg.Params.TextDocument.URI})
-	log.Println("Received didChange notification: ", msg.Params.TextDocument.URI)
+	date, err := model.DateFromFile(model.DateFromFileNameParams{URI: msg.Params.TextDocument.URI, ProjectRoot: c.configs.ProjectRoot})
+	if err != nil {
+		log.Printf("Error getting date from file: %s for %s", err, msg.Params.TextDocument.URI)
+	}
+	c.parseText(parsingTextParams{text: text, uri: msg.Params.TextDocument.URI, date: date})
+	log.Println("Received didChange notification: ", msg.Params.TextDocument.URI, "representing", date)
 }
 
 func reactOnSave(msg *messages.DidSaveTextDocumentNotification, c *Controller) {
