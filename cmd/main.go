@@ -56,14 +56,15 @@ func main() {
 		log.Fatalf("Error reading config file: %s", err)
 	}
 
+	writer := os.Stdout
 	controller := lspserver.NewController(&lspserver.ControllerConfig{
 		ProjectRoot: *projectRootFlag,
 		Config:      config,
+		Writer:      writer,
 	})
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Split(rpc.Split)
 
-	writer := os.Stdout
 	for scanner.Scan() {
 		msg := scanner.Bytes()
 		method, contents, err := rpc.DecodeMessage(msg)
@@ -71,7 +72,7 @@ func main() {
 			log.Printf("Got an error: %s", err)
 			continue
 		}
-		controller.HandleMessage(writer, method, contents)
+		controller.HandleMessage(method, contents)
 
 	}
 }

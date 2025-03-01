@@ -71,6 +71,10 @@ func (config *Config) IsOvertime(category string) bool {
 
 }
 
+func (config *Config) PossibleCategories() []string {
+	return append(config.Categories.Regular, config.Categories.Overtime...)
+}
+
 func (config *Config) IsTask(text string) bool {
 	if !(strings.HasPrefix(text, config.Tasks.Prefix)) {
 		return false

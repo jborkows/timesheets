@@ -2,13 +2,12 @@ package lspserver
 
 import (
 	"encoding/json"
-	"io"
 	"log"
 
 	messages "github.com/jborkows/timesheets/internal/lspmessages"
 )
 
-func (self *Controller) HandleMessage(writer io.Writer, method string, contents []byte) {
+func (self *Controller) HandleMessage(method string, contents []byte) {
 	response, err := self.route(method, contents)
 	if err != nil {
 		log.Printf("Got an error: %s", err)
@@ -16,7 +15,7 @@ func (self *Controller) HandleMessage(writer io.Writer, method string, contents 
 	}
 	if response != nil {
 		log.Printf("Sending response for %s", method)
-		err = writeResponse(writer, response)
+		err = self.writeResponse(response)
 		if err != nil {
 			log.Printf("Error writing response: %s", err)
 		}
