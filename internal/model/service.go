@@ -77,9 +77,17 @@ func (self *Service) process(text string, date time.Time, mode WriteMode) ([]Wor
 		workItem, err := parseLine(line)
 		if err != nil {
 			errors = append(errors, LineError{LineNumber: counter, LineLength: len(line), Err: err})
-		} else {
-			workItems = append(workItems, workItem)
+			continue
 		}
+		switch e := workItem.(type) {
+		case *TimesheetEntry:
+			err := e.Validate()
+			if err != nil {
+				errors = append(errors, LineError{LineNumber: counter, LineLength: len(line), Err: err})
+				continue
+			}
+		}
+		workItems = append(workItems, workItem)
 	}
 	log.Printf("Parsed %+v items", workItems)
 	log.Printf("Parsed %+v errors", errors)

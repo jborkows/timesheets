@@ -98,7 +98,7 @@ func (t *Timesheet) Clear() {
 	t.Entries = nil
 }
 
-func validate(entry *TimesheetEntry) error {
+func (entry *TimesheetEntry) Validate() error {
 	if entry.Hours >= 24 {
 		return &InvalidTimesheetEntry{Entry: entry, Err: fmt.Errorf("hours cannot be more than 24")}
 	}
@@ -109,6 +109,9 @@ func validate(entry *TimesheetEntry) error {
 		return &InvalidTimesheetEntry{Entry: entry, Err: fmt.Errorf("hours and minutes cannot be both 0")}
 	}
 	return nil
+}
+func validate(entry *TimesheetEntry) error {
+	return entry.Validate()
 }
 
 func (t *Timesheet) Add(entry *TimesheetEntry) error {

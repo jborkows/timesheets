@@ -76,7 +76,7 @@ func (self *Controller) notifyAboutErrors(params []model.LineError, uri string) 
 		case model.ErrInvalidTime:
 			errorMessage = "Invalid time format. Use X.Y or XhYm (e.g., 1.5 or 1h30m)"
 		default:
-			errorMessage = "Unknown error"
+			errorMessage = param.Err.Error()
 			log.Printf("Unknown error: %v", param)
 		}
 		diagnostic := messages.Diagnostic{
