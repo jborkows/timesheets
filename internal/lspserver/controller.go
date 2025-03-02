@@ -46,11 +46,6 @@ type parsingTextParams struct {
 	uri  string
 	date time.Time
 }
-type lineError struct {
-	lineNumber int
-	lineLength int
-	err        error
-}
 
 func (self *Controller) parseText(input parsingTextParams) []model.WorkItem {
 	workItems, errors := self.service.ParseText(input.text, input.date)
