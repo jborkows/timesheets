@@ -57,10 +57,10 @@ func main() {
 	}
 
 	writer := os.Stdout
+	service := model.NewService(*projectRootFlag, config)
 	controller := lspserver.NewController(&lspserver.ControllerConfig{
-		ProjectRoot: *projectRootFlag,
-		Config:      config,
-		Writer:      writer,
+		Service: service,
+		Writer:  writer,
 	})
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Split(rpc.Split)

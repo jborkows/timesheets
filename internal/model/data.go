@@ -9,6 +9,10 @@ type DateInfo struct {
 	Value string
 }
 
+func DateInfoFrom(t time.Time) DateInfo {
+	return DateInfo{Value: t.Format("2006-01-02")}
+}
+
 type HolidayClassifier = func(aDate *DateInfo) bool
 type Statitic struct {
 	Category string
