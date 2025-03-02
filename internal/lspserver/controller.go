@@ -41,31 +41,25 @@ func (self *Controller) onSave(msg *messages.DidSaveTextDocumentNotification) {
 	self.didSaveReactor(msg, self)
 }
 
-type parsingTextParams struct {
-	text string
-	uri  string
-	date time.Time
-}
-
-func (self *Controller) parseText(input parsingTextParams) []model.WorkItem {
-	workItems, errors := self.service.ParseText(input.text, input.date)
-	self.notifyAboutErrors(errors, input.uri)
-	return workItems
-
-}
-
 func reactOnChange(msg *messages.TextDocumentDidChangeNotification, c *Controller) {
 	text := msg.Params.ContentChanges[0].Text
-	//TODO: use workItems
 	date, err := c.service.ParseDateFromName(msg.Params.TextDocument.URI)
 	if err != nil {
 		log.Printf("Error getting date from file: %s for %s", err, msg.Params.TextDocument.URI)
 	}
-	c.parseText(parsingTextParams{text: text, uri: msg.Params.TextDocument.URI, date: date})
+	_, errors := c.service.ProcessForDraft(text, date)
+	c.notifyAboutErrors(errors, msg.Params.TextDocument.URI)
 	log.Println("Received didChange notification: ", msg.Params.TextDocument.URI, "representing", date)
 }
 
 func reactOnSave(msg *messages.DidSaveTextDocumentNotification, c *Controller) {
+	text := msg.Params.Text
+	date, err := c.service.ParseDateFromName(msg.Params.TextDocument.URI)
+	if err != nil {
+		log.Printf("Error getting date from file: %s for %s", err, msg.Params.TextDocument.URI)
+	}
+	_, errors := c.service.ProcessForSave(text, date)
+	c.notifyAboutErrors(errors, msg.Params.TextDocument.URI)
 	log.Println("Received didSave notification: ", msg.Params.TextDocument.URI)
 }
 

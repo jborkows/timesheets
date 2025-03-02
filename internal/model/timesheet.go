@@ -111,12 +111,16 @@ func validate(entry *TimesheetEntry) error {
 	return nil
 }
 
-func (t *Timesheet) AddEntry(entry TimesheetEntry) error {
-	if err := validate(&entry); err != nil {
+func (t *Timesheet) Add(entry *TimesheetEntry) error {
+	if err := validate(entry); err != nil {
 		return fmt.Errorf("invalid entry: %w", err)
 	}
-	t.Entries = append(t.Entries, &entry)
+	t.Entries = append(t.Entries, entry)
 	return nil
+}
+
+func (t *Timesheet) AddEntry(entry TimesheetEntry) error {
+	return t.Add(&entry)
 }
 
 func (t *Timesheet) PotentialTotalTime() uint8 {

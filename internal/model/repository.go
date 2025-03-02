@@ -24,3 +24,7 @@ type Queryer interface {
 	Weekly(ctx context.Context, knowsAboutWeek KnowsAboutWeek) ([]WeeklyStatistic, error)
 	Monthly(ctx context.Context, knowsAboutMonth KnowsAboutMonth) ([]MonthlyStatistic, error)
 }
+
+type Repository interface {
+	Transactional(ctx context.Context, operation func(context.Context, Saver, Queryer) error) error
+}

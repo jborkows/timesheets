@@ -7,8 +7,10 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
+	mydb "github.com/jborkows/timesheets/internal/db"
 	"github.com/jborkows/timesheets/internal/logs"
 	"github.com/jborkows/timesheets/internal/lspserver"
 	"github.com/jborkows/timesheets/internal/model"
@@ -56,8 +58,11 @@ func main() {
 		log.Fatalf("Error reading config file: %s", err)
 	}
 
+	repository, cleanup := initDB(*projectRootFlag, config)
+	defer cleanup()
 	writer := os.Stdout
-	service := model.NewService(*projectRootFlag, config)
+
+	service := model.NewService(*projectRootFlag, config, repository)
 	controller := lspserver.NewController(&lspserver.ControllerConfig{
 		Service: service,
 		Writer:  writer,
@@ -74,6 +79,28 @@ func main() {
 		}
 		controller.HandleMessage(method, contents)
 
+	}
+}
+
+type cleanupFunction func()
+
+func initDB(projectRoot string, config *model.Config) (model.Repository, cleanupFunction) {
+	dbPath := filepath.Join(projectRoot, "timesheets.db")
+	if !model.Exists(dbPath) {
+		_, err := os.Create(dbPath)
+		if err != nil {
+			log.Fatalf("Error creating db file: %s", err)
+		}
+	}
+	db, err := mydb.NewDatabase(dbPath)
+	if err != nil {
+		log.Fatalf("Error opening db: %s", err)
+	}
+	repository := mydb.CreateRepository(db, config)
+	return repository, func() {
+		if err := db.Close(); err != nil {
+			log.Fatalf("Error closing db: %s", err)
+		}
 	}
 }
 
