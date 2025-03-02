@@ -4,7 +4,8 @@ base_dir_full=$(realpath $base_dir)
 echo $base_dir_full
 project_root=$(realpath $base_dir_full/..)
 application_exe=${project_root}/tmp/main
-test_project_dir="/mnt/ramdisk/test_project"
+rm -rf /mnt/ramdisk/test_project_*
+test_project_dir="/mnt/ramdisk/test_project_"$(date +%Y%m%d_%H%M)
 rm -rf $test_project_dir
 mkdir -p $test_project_dir
 cat << EOF > ${test_project_dir}/.nvimrc.lua
