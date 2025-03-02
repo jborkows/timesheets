@@ -69,7 +69,7 @@ func NewInitializeResponse(response Response) InitializeResponse {
 				// DefinitionProvider: true,
 				// CodeActionProvider: true,
 				// ColorProvider:      false,
-				// CompletionProvider: map[string]any{},
+				CompletionProvider: map[string]any{},
 				// ExecuteCommand: ExecuteCommandClientCapabilities{
 				// 	Commands: []string{"some_command"},
 				// },

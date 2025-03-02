@@ -2,6 +2,7 @@ package lspserver
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 
 	messages "github.com/jborkows/timesheets/internal/lspmessages"
@@ -62,6 +63,17 @@ func (self *Controller) route(method string, contents []byte) (any, error) {
 		}
 		self.onSave(&request)
 		return nil, nil
+
+	case "textDocument/completion":
+		var request messages.CompletionRequest
+		if err := json.Unmarshal(contents, &request); err != nil {
+			return nil, err
+		}
+		error := self.completion(&request)
+		if error != nil {
+			return nil, fmt.Errorf("Error getting completions: %w", error)
+		}
+		return nil, error
 	default:
 		return nil, nil
 	}

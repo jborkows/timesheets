@@ -107,6 +107,31 @@ func (self *Controller) notifyAboutErrors(params []model.LineError, uri string) 
 	}
 }
 
+func (self *Controller) completion(request *messages.CompletionRequest) error {
+	params := request.Params
+	completions := self.completions(params.TextDocument.URI, params.Position)
+
+	msg := messages.CompletionResponse{
+		Response: response(request.Request),
+		Result:   completions,
+	}
+	return self.writeResponse(msg)
+}
+
+func (self *Controller) completions(uri string, position messages.Position) []messages.CompletionItem {
+	if position.Character > 5 {
+		return []messages.CompletionItem{}
+	}
+	completions := []messages.CompletionItem{}
+	for _, category := range self.service.PossibleCategories() {
+		completions = append(completions, messages.CompletionItem{
+			Label:  category,
+			Detail: "Category",
+		})
+	}
+	return completions
+}
+
 func (self *Controller) writeResponse(msg any) error {
 	reply := rpc.EncodeMessage(msg)
 
