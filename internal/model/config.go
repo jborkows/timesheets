@@ -1,11 +1,13 @@
 package model
 
 import (
+	"errors"
 	"io"
 	"strings"
 
-	"github.com/BurntSushi/toml"
 	"slices"
+
+	"github.com/BurntSushi/toml"
 )
 
 type categories struct {
@@ -36,7 +38,23 @@ func ReadConfig(r io.Reader) (*Config, error) {
 	if _, err := toml.Decode(string(tomlData), &config); err != nil {
 		return nil, err
 	}
+	err = config.validate()
+	if err != nil {
+		return nil, err
+	}
 	return &config, nil
+}
+
+func (config *Config) validate() error {
+	for _, category := range config.Categories.Regular {
+		if category == "" {
+			return errors.New("empty category")
+		}
+		if strings.Contains(category, " ") {
+			return errors.New("category cannot contain spaces")
+		}
+	}
+	return nil
 }
 
 func (config *Config) IsHoliday(info *DateInfo) bool {

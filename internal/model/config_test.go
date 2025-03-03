@@ -81,3 +81,21 @@ func TestIsTask(t *testing.T) {
 	assert.False(t, config.IsTask("task-12x3"))
 	assert.False(t, config.IsTask("task-abc"))
 }
+
+func TestShouldFailDueToSpacesInCategoryNames(t *testing.T) {
+	t.Parallel()
+	_, err := model.ReadConfig(strings.NewReader(invalidCategories))
+	assert.NotNil(t, err)
+}
+
+var invalidCategories = ` 
+[categories]
+regular=["category A", "categoryB "]
+overtime=["overtimeA"]
+[holidays]
+repeatable=["11-11","05-01","01-01", "12-25"]
+addhoc=["2021-02-01"]
+[tasks]
+prefix="task-"
+onlyNumbers=true
+`
