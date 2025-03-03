@@ -93,6 +93,20 @@ func TestShouldAllowSingleHour(t *testing.T) {
 	assert.Equal(t, uint8(0), valued.Minutes)
 }
 
+func TestShouldAllowSingleMinutes(t *testing.T) {
+	t.Parallel()
+
+	parser := workingDayParser()
+	timesheet, err := parser.ParseLine(aDate())("Category 30m meeting")
+	if err != nil {
+		t.Fatalf("Error parsing line: %v", err)
+	}
+	valued := timesheet.(*model.TimesheetEntry)
+	assert.Equal(t, uint8(0), valued.Hours)
+	assert.Equal(t, uint8(30), valued.Minutes)
+	assert.Nil(t, valued.Task)
+}
+
 func TestShouldAllowHourWithMinutes(t *testing.T) {
 	t.Parallel()
 

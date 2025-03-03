@@ -81,7 +81,7 @@ func (self *impl) saveTimeSheet(ctx context.Context, timesheet *model.Timesheet,
 				Hours:         int64(e.Hours),
 				Minutes:       int64(e.Minutes),
 				Comment:       e.Comment,
-				Task:          *e.Task,
+				Task:          e.TaskName(),
 				Category:      e.Category,
 			}
 			err := self.queries.AddEntry(ctx, savingDate)

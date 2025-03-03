@@ -24,6 +24,13 @@ type TimesheetEntry struct {
 	Category CategoryType
 }
 
+func (self *TimesheetEntry) TaskName() string {
+	if self.Task == nil {
+		return ""
+	}
+	return *self.Task
+}
+
 type Timesheet struct {
 	Date    Day
 	Entries []WorkItem
