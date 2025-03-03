@@ -65,7 +65,7 @@ func NewInitializeResponse(response Response) InitializeResponse {
 					Change:    1,
 					Save:      SaveOptions{IncludeText: true},
 				},
-				// HoverProvider:      true,
+				HoverProvider: true,
 				// DefinitionProvider: true,
 				// CodeActionProvider: true,
 				// ColorProvider:      false,

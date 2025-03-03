@@ -74,6 +74,17 @@ func (self *Controller) route(method string, contents []byte) (any, error) {
 			return nil, fmt.Errorf("Error getting completions: %w", error)
 		}
 		return nil, error
+
+	case "textDocument/hover":
+		var request messages.HoverRequest
+		if err := json.Unmarshal(contents, &request); err != nil {
+			return nil, err
+		}
+		err := self.Hover(&request)
+		if err != nil {
+			return nil, fmt.Errorf("Error getting hover: %w", err)
+		}
+		return nil, nil
 	default:
 		return nil, nil
 	}

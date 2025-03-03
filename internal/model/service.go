@@ -148,3 +148,19 @@ func (self *Service) PossibleCategories() []string {
 func (self *Service) ParseDateFromName(uri string) (time.Time, error) {
 	return DateFromFile(DateFromFileNameParams{URI: uri, ProjectRoot: self.projectRoot})
 }
+
+func (self *Service) DailyStatistics(date time.Time) ([]DailyStatistic, error) {
+	var statistics []DailyStatistic
+	err := self.repository.Transactional(context.TODO(), func(ctx context.Context, repository Saver, queryer Queryer) error {
+		result, error := queryer.Daily(ctx, TimesheetForDate(date))
+		if error != nil {
+			return fmt.Errorf("failed to get daily statistics: %w", error)
+		}
+		statistics = result
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return statistics, nil
+}

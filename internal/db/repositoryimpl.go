@@ -160,7 +160,7 @@ func (self *impl) Daily(ctx context.Context, knowsAboutDate model.KnowsAboutDate
 	if err != nil {
 		return nil, fmt.Errorf("failed to find statistics: %w for %v", err, knowsAboutDate)
 	}
-	result := groupData[DailyReportDatum, model.DailyStatistic](structDataParams[DailyReportDatum, model.DailyStatistic]{
+	result := groupData(structDataParams[DailyReportDatum, model.DailyStatistic]{
 		self: self,
 		data: values,
 		toSelect: func(entry DailyReportDatum) selectOutput {
@@ -173,8 +173,9 @@ func (self *impl) Daily(ctx context.Context, knowsAboutDate model.KnowsAboutDate
 		},
 		toModel: func(entry *dirtyWithData) model.DailyStatistic {
 			return model.DailyStatistic{
-				Dirty: entry.Dirty,
-				Daily: entry.Data,
+				Category: entry.Data.Category,
+				Dirty:    entry.Dirty,
+				Daily:    entry.Data,
 			}
 		},
 	})

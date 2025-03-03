@@ -1,6 +1,7 @@
 package lspserver
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"strings"
@@ -130,6 +131,39 @@ func (self *Controller) completions(uri string, position messages.Position) []me
 		})
 	}
 	return completions
+}
+
+func (self *Controller) Hover(request *messages.HoverRequest) error {
+
+	date, err := self.service.ParseDateFromName(request.Params.TextDocument.URI)
+	if err != nil {
+		return fmt.Errorf("Error getting date from file: %s for %s", err, request.Params.TextDocument.URI)
+	}
+	statistics, err := self.service.DailyStatistics(date)
+	if err != nil {
+		return fmt.Errorf("Error getting daily statistics: %s", err)
+	}
+	var builder strings.Builder
+	builder.WriteString("Daily statistics for ")
+	builder.WriteString(date.Format("2006-01-02"))
+	builder.WriteString("\n")
+	for _, stat := range statistics {
+		source := stat.Dirty
+		builder.WriteString(source.Category)
+		builder.WriteString(": ")
+		builder.WriteString(fmt.Sprintf("%02d:%02d", source.Hours, source.Minutes))
+		builder.WriteString("\n")
+	}
+	builder.WriteString("End \n")
+
+	msg := messages.HoverResponse{
+		Response: response(request.Request),
+		Result: messages.HoverResult{
+			Contents: builder.String(),
+		},
+	}
+
+	return self.writeResponse(msg)
 }
 
 func (self *Controller) writeResponse(msg any) error {
