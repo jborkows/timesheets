@@ -242,6 +242,29 @@ func (self *impl) Monthly(ctx context.Context, knowsAboutMonth model.KnowsAboutM
 	return result, nil
 }
 
+func (self *impl) DaySummary(ctx context.Context, dateKnower model.KnowsAboutDate) ([]model.DayEntry, error) {
+	day := dateKnower.Day()
+	values, err := self.queries.TimesheetForDay(context.TODO(), dayAsInteger(day))
+	if err != nil {
+		return nil, fmt.Errorf("failed to find day statistics: %w for %v", err, dateKnower)
+	}
+	result := make([]model.DayEntry, 0, len(values))
+	for _, value := range values {
+		result = append(result, model.DayEntry{
+			Holiday:       value.Holiday,
+			Pending:       value.Pending,
+			TimesheetDate: value.TimesheetDate,
+			Hours:         value.Hours,
+			Minutes:       value.Minutes,
+			Comment:       value.Comment,
+			Task:          value.Task,
+			Category:      value.Category,
+		})
+	}
+
+	return result, nil
+}
+
 func dayAsInteger(d *model.Day) int64 {
 	value := time.Time(*d).Format("20060102")
 	v, e := strconv.Atoi(value)

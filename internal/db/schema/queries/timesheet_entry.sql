@@ -11,5 +11,8 @@ insert into timesheet_entry_data (holiday, pending, hours, timesheet_date) value
 -- name: AddEntry :exec
 insert into timesheet_entry_data (holiday, pending, timesheet_date, hours, minutes,comment,task, category) values (:holiday, :pending, :timesheet_date, :hours, :minutes, :comment, :task, :category);
 
+-- name: TimesheetForDay :many
+select holiday, pending, timesheet_date, hours, minutes,comment,task, category from timesheet_entry_data where timesheet_date = :timesheet_date
+order by timesheet_date, category, task;
 
 

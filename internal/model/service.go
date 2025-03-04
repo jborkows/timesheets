@@ -149,18 +149,43 @@ func (self *Service) ParseDateFromName(uri string) (time.Time, error) {
 	return DateFromFile(DateFromFileNameParams{URI: uri, ProjectRoot: self.projectRoot})
 }
 
-func (self *Service) DailyStatistics(date time.Time) ([]DailyStatistic, error) {
-	var statistics []DailyStatistic
+type DataQuery[T any] = func(context.Context, Queryer, time.Time) (T, error)
+
+func statistics[T any](self *Service, date time.Time, fn DataQuery[T]) (T, error) {
+	var result T
 	err := self.repository.Transactional(context.TODO(), func(ctx context.Context, repository Saver, queryer Queryer) error {
-		result, error := queryer.Daily(ctx, TimesheetForDate(date))
+		r, error := fn(ctx, queryer, date)
 		if error != nil {
-			return fmt.Errorf("failed to get daily statistics: %w", error)
+			return fmt.Errorf("failed to get statistics: %w", error)
 		}
-		statistics = result
+		result = r
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return result, err
 	}
-	return statistics, nil
+	return result, nil
+}
+
+func (self *Service) DailyStatistics(date time.Time) ([]DailyStatistic, error) {
+	return statistics(self, date, func(ctx context.Context, queryer Queryer, date time.Time) ([]DailyStatistic, error) {
+		return queryer.Daily(ctx, TimesheetForDate(date))
+	})
+}
+func (self *Service) DayStatistics(date time.Time) ([]DayEntry, error) {
+	return statistics(self, date, func(ctx context.Context, queryer Queryer, date time.Time) ([]DayEntry, error) {
+		return queryer.DaySummary(ctx, TimesheetForDate(date))
+	})
+}
+
+func (self *Service) WeeklyStatistics(date time.Time) ([]WeeklyStatistic, error) {
+	return statistics(self, date, func(ctx context.Context, queryer Queryer, date time.Time) ([]WeeklyStatistic, error) {
+		return queryer.Weekly(ctx, TimesheetForDate(date))
+	})
+}
+
+func (self *Service) MonthlyStatistics(date time.Time) ([]MonthlyStatistic, error) {
+	return statistics(self, date, func(ctx context.Context, queryer Queryer, date time.Time) ([]MonthlyStatistic, error) {
+		return queryer.Monthly(ctx, TimesheetForDate(date))
+	})
 }

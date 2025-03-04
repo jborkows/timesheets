@@ -70,3 +70,51 @@ func (q *Queries) ClearTimesheetData(ctx context.Context, timesheetDate int64) e
 	_, err := q.db.ExecContext(ctx, clearTimesheetData, timesheetDate)
 	return err
 }
+
+const timesheetForDay = `-- name: TimesheetForDay :many
+select holiday, pending, timesheet_date, hours, minutes,comment,task, category from timesheet_entry_data where timesheet_date = ?1
+order by timesheet_date, category, task
+`
+
+type TimesheetForDayRow struct {
+	Holiday       bool
+	Pending       bool
+	TimesheetDate int64
+	Hours         int64
+	Minutes       int64
+	Comment       string
+	Task          string
+	Category      string
+}
+
+func (q *Queries) TimesheetForDay(ctx context.Context, timesheetDate int64) ([]TimesheetForDayRow, error) {
+	rows, err := q.db.QueryContext(ctx, timesheetForDay, timesheetDate)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []TimesheetForDayRow
+	for rows.Next() {
+		var i TimesheetForDayRow
+		if err := rows.Scan(
+			&i.Holiday,
+			&i.Pending,
+			&i.TimesheetDate,
+			&i.Hours,
+			&i.Minutes,
+			&i.Comment,
+			&i.Task,
+			&i.Category,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
