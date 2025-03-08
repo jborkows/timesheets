@@ -71,7 +71,7 @@ func (self *Controller) notifyAboutErrors(params []model.LineError, uri string) 
 		var errorMessage string
 		switch param.Err {
 		case model.ErrEmptyLine:
-			errorMessage = "Empty line"
+			continue
 		case model.ErrInvalidCategory:
 			errorMessage = "Invalid category. Possible categories: " + strings.Join(self.service.PossibleCategories(), ", ")
 		case model.ErrInvalidTime:
