@@ -45,7 +45,7 @@ func ReadConfig(r io.Reader) (*Config, error) {
 	return &config, nil
 }
 
-func NewConfig(regularCategories []string) *Config {
+func NewConfig(regularCategories []string, taskPrefix string) *Config {
 	return &Config{
 		Categories: categories{
 			Regular:  regularCategories,
@@ -56,7 +56,7 @@ func NewConfig(regularCategories []string) *Config {
 			AddHoc:     []string{},
 		},
 		Tasks: taskDefinition{
-			Prefix:      "Task-",
+			Prefix:      taskPrefix,
 			OnlyNumbers: true,
 		},
 	}

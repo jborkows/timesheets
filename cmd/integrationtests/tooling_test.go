@@ -10,7 +10,7 @@ import (
 )
 
 func TestStartWorkspace(t *testing.T) {
-	config := model.NewConfig([]string{"aaa", "bbb", "ccc"})
+	config := model.NewConfig([]string{"aaa", "bbb", "ccc"}, "Task-")
 	useWorkspace(config, func(service *model.Service) {
 		// Add test logic here, e.g., creating a new project
 	})
