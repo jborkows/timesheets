@@ -27,8 +27,9 @@ aaa 1h45m third`, date)
 }
 
 func TestShowDailyStatistics(t *testing.T) {
+	t.Parallel()
 	config := model.NewConfig([]string{"aaa", "bbb", "ccc"}, "Task-")
-	date, err := time.Parse("2006-01-02", "2022-02-02")
+	date, err := time.Parse("2006-01-02", "2025-03-06")
 	if err != nil {
 		log.Fatalf("Failed to parse date: %v", err)
 	}
@@ -39,6 +40,8 @@ bbb 2.0 description
 ccc 1.5 Task-123 some other 
 aaa 1h30m  second
 aaa 1h45m third`, date)
+		_, _ = service.ProcessForSave(`aaa 1.0 first`, date.AddDate(0, 0, 1))
+		_, _ = service.ProcessForSave(`aaa 1.0 first`, date.AddDate(0, 0, 8))
 		reportFile, err := service.ShowDailyStatistics(date)
 		if err != nil {
 			log.Fatalf("Failed to generate report: %v", err)
@@ -48,15 +51,26 @@ aaa 1h45m third`, date)
 			log.Fatalf("Failed to read report: %v", err)
 		}
 		log.Printf("Report content: %s", content)
-		desiredContent := `Daily statistics for 2022-02-02
-aaa 3.75
+		desiredContent := `For 2025-03-06
+Daily statistics
+aaa 3:45
 1.0 first
 1.5 second
 1.75 third
-bbb 2.0
+bbb 2:00
 2.0 description
+ccc 1:30
+1.5 Task-123 some other
+
+Weekly statistics
+aaa 4.75
+bbb 2.0
 ccc 1.5
-1.5 Task-123 some other`
+
+Monthly statistics
+aaa 5.75
+bbb 2.0
+ccc 1.5`
 		assert.Equal(t, desiredContent, string(content))
 	})
 }

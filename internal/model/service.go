@@ -193,6 +193,5 @@ func (self *Service) MonthlyStatistics(date time.Time) ([]MonthlyStatistic, erro
 type FilePath string
 
 func (self *Service) ShowDailyStatistics(date time.Time) (FilePath, error) {
-
 	panic("Not implemented")
 }
