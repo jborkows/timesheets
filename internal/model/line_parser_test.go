@@ -62,8 +62,17 @@ func TestShouldParseTextWithDecimalTime(t *testing.T) {
 	assert.Equal(t, uint8(30), valued.Minutes)
 	assert.Equal(t, "Task-123", *valued.Task)
 	assert.Equal(t, "description", valued.Comment)
-
 }
+
+func TestOnlyWrongCategory(t *testing.T) {
+	t.Parallel()
+
+	parser := workingDayParser()
+	timesheet, err := parser.ParseLine(aDate())("Cate ")
+	assert.Nil(t, timesheet)
+	assert.Equal(t, model.ErrInvalidCategory, err)
+}
+
 func TestShouldParseTextWithDecimalTwoPlacesTime(t *testing.T) {
 	t.Parallel()
 

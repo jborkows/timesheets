@@ -77,13 +77,21 @@ func (analyzer *tokenAnalyzer) analyze(t token) (err error) {
 	return nil
 }
 
-func (analyzer *tokenAnalyzer) finish() *TimesheetEntry {
+func (analyzer *tokenAnalyzer) finish() (*TimesheetEntry, error) {
+	switch analyzer.state {
+	case StateCategory:
+		if analyzer.IsCategory(analyzer.entry.Category) {
+
+		} else {
+			return nil, ErrInvalidCategory
+		}
+	}
 	var commentBuilder strings.Builder
 	for _, t := range analyzer.tokens {
 		commentBuilder.WriteString(t.value())
 	}
 	analyzer.entry.Comment = strings.TrimSpace(commentBuilder.String())
-	return analyzer.entry
+	return analyzer.entry, nil
 }
 
 func (analyzer *tokenAnalyzer) analizeTask(t token) error {
@@ -244,7 +252,7 @@ func (parser *Parser) doParseLine(line string) (WorkItem, error) {
 		}
 
 	}
-	return analyzer.finish(), nil
+	return analyzer.finish()
 
 }
 
@@ -263,7 +271,7 @@ func tokenize(line string) []token {
 	var temp []rune
 	kind := ""
 
-	for i := 0; i < len(lineAsRunes); i++ {
+	for i := range lineAsRunes {
 		if lineAsRunes[i] >= '0' && lineAsRunes[i] <= '9' {
 			if kind == "" {
 				kind = "number"
