@@ -21,7 +21,6 @@ import (
 )
 
 func NewDatabase(filePath string) (*sql.DB, error) {
-
 	dsn := fmt.Sprintf("file:%s?_journal_mode=WAL&_foreign_keys=ON&_cache_size=2000&_busy_timeout=5000", filePath)
 	db, err := otelsql.Open("sqlite3", dsn,
 		otelsql.WithAttributes(semconv.DBSystemSqlite),
@@ -123,4 +122,42 @@ func optimize(database *sql.DB) error {
 		return err
 	})
 
+}
+
+func RemoveDatabase(filePath string) {
+	cleanup := func() {
+		err := os.Remove(filePath)
+		if err != nil {
+			fmt.Println("Error removing temporary file:", err)
+		} else {
+			fmt.Println("Temporary file removed.")
+		}
+		removeAdditionalDbFiles(filePath)
+	}
+	if r := recover(); r != nil {
+		cleanup()
+		panic(r)
+	} else {
+		cleanup()
+	}
+	cleanup()
+}
+
+func removeAdditionalDbFiles(fileName string) {
+	removeAdditionalDbFile(fileName, "wal")
+	removeAdditionalDbFile(fileName, "shm")
+}
+
+func removeAdditionalDbFile(fileName string, suffix string) {
+
+	auxielieryFile := fmt.Sprintf("%s-%s", fileName, suffix)
+	if _, err := os.Stat(auxielieryFile); err != nil {
+		log.Printf("Error checking %s file: %s", suffix, err)
+		return
+	}
+	if err := os.Remove(auxielieryFile); err != nil {
+		log.Printf("Error removing %s file: %s", suffix, err)
+	} else {
+		log.Printf("%s file %s removed.", suffix, auxielieryFile)
+	}
 }

@@ -45,6 +45,23 @@ func ReadConfig(r io.Reader) (*Config, error) {
 	return &config, nil
 }
 
+func NewConfig(regularCategories []string) *Config {
+	return &Config{
+		Categories: categories{
+			Regular:  regularCategories,
+			Overtime: []string{},
+		},
+		Holidays: holidays{
+			Repeatable: []string{},
+			AddHoc:     []string{},
+		},
+		Tasks: taskDefinition{
+			Prefix:      "Task-",
+			OnlyNumbers: true,
+		},
+	}
+}
+
 func (config *Config) validate() error {
 	for _, category := range config.Categories.Regular {
 		if category == "" {
