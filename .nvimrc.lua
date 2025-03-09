@@ -21,3 +21,28 @@ vim.api.nvim_create_autocmd("FileType", {
 		vim.keymap.set("n", "<F8>", "<Plug>(DBUI_ExecuteQuery)", { silent = true, buffer = true })
 	end,
 })
+
+vim.api.nvim_create_user_command("RefreshDB", function()
+	local output = {}
+
+	vim.fn.jobstart("make testDb", {
+		on_stdout = function(_, data)
+			for _, line in ipairs(data) do
+				if line ~= "" then
+					table.insert(output, line)
+				end
+			end
+		end,
+		on_stderr = function(_, data)
+			for _, line in ipairs(data) do
+				if line ~= "" then
+					table.insert(output, line)
+				end
+			end
+		end,
+		on_exit = function()
+			vim.notify("DB Recreated:\n\t" .. table.concat(output, "\n\t"), "info")
+			vim.cmd("DBCompletionClearCache")
+		end,
+	})
+end, {})

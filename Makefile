@@ -25,6 +25,7 @@ generate:
 	@sqlc generate -f ./config/sqlc.yaml
 testDb:
 	@sqlc generate -f ./config/sqlc.yaml
+	@rm -rf ./temp/timesheets.db*
 	@migrate -database "sqlite3://./temp/timesheets.db?journal_mode=WAL&foreign_keys=true&cache_size=2000" -path ./internal/db/schema/migrations up
 migrate:
 	@migrate -database "sqlite3://./timesheets.db?journal_mode=WAL&foreign_keys=true&cache_size=2000" -path db/migrations up
