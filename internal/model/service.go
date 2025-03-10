@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 )
@@ -192,6 +195,118 @@ func (self *Service) MonthlyStatistics(date time.Time) ([]MonthlyStatistic, erro
 
 type FilePath string
 
+func printDayStatistics(reportFile *os.File, dayEntries []DayEntry) {
+	fmt.Fprintln(reportFile, "Daily statistics")
+	var categoryFiles map[string][]DayEntry = make(map[string][]DayEntry)
+	for _, entry := range dayEntries {
+		if _, ok := categoryFiles[entry.Category]; !ok {
+			categoryFiles[entry.Category] = make([]DayEntry, 0)
+		}
+		if !entry.Pending {
+			continue
+		}
+		categoryFiles[entry.Category] = append(categoryFiles[entry.Category], entry)
+	}
+	categories := make([]string, 0, len(categoryFiles))
+	for category := range categoryFiles {
+		categories = append(categories, category)
+	}
+	sort.Strings(categories)
+	for _, category := range categories {
+		entries := categoryFiles[category]
+		sumHours := 0
+		sumMinutes := 0
+		for _, entry := range entries {
+			sumHours += int(entry.Hours)
+			sumMinutes += int(entry.Minutes)
+		}
+		fmt.Fprintf(reportFile, "%s %d:%02d\n", category, sumHours+sumMinutes/60, sumMinutes%60)
+		for _, entry := range entries {
+			var description strings.Builder
+			if entry.Task != "" {
+				description.WriteString(entry.Task)
+				description.WriteString(" ")
+			}
+			description.WriteString(entry.Comment)
+			minutes := entry.Minutes * 10 / 6
+			if minutes%10 == 0 {
+				fmt.Fprintf(reportFile, "%d.%d %s\n", entry.Hours, minutes/10, description.String())
+			} else {
+				fmt.Fprintf(reportFile, "%d.%d %s\n", entry.Hours, entry.Minutes*10/6, description.String())
+			}
+		}
+	}
+}
+
+func printMinutesAsDecimal(minutes uint8) string {
+	value := uint16(minutes) * 10 / 6
+	if value%10 == 0 {
+		return fmt.Sprintf("%d", value/10)
+	} else {
+		return fmt.Sprintf("%d", value)
+	}
+}
+
+func printWeeklyStatistics(reportFile *os.File, weeklyStatistics []WeeklyStatistic) {
+	fmt.Fprintln(reportFile, "Weekly statistics")
+	sort.Slice(weeklyStatistics, func(i, j int) bool {
+		return weeklyStatistics[i].Category < weeklyStatistics[j].Category
+	})
+
+	for _, entry := range weeklyStatistics {
+		fmt.Fprintf(reportFile, "%s %d.%s\n", entry.Category, int(entry.Weekly.Hours), printMinutesAsDecimal(entry.Weekly.Minutes))
+	}
+}
+
+func printMonthly(reportFile *os.File, statistics []MonthlyStatistic) {
+	fmt.Fprintln(reportFile, "Monthly statistics")
+	sort.Slice(statistics, func(i, j int) bool {
+		return statistics[i].Category < statistics[j].Category
+	})
+
+	for _, entry := range statistics {
+		fmt.Fprintf(reportFile, "%s %d.%s\n", entry.Category, int(entry.Monthly.Hours), printMinutesAsDecimal(entry.Monthly.Minutes))
+
+	}
+}
+
 func (self *Service) ShowDailyStatistics(date time.Time) (FilePath, error) {
-	panic("Not implemented")
+
+	fileName := fmt.Sprintf("report-timesheet-%s.txt", date.Format("2006-01-02"))
+	fileName = filepath.Join(os.TempDir(), fileName)
+
+	if path, err := os.Stat(fileName); err == nil {
+		if err := os.Remove(path.Name()); err != nil {
+			if !os.IsNotExist(err) {
+				return "", fmt.Errorf("failed to remove report file: %w", err)
+			}
+		}
+	}
+
+	reportFile, err := os.Create(fileName)
+	if err != nil {
+		return "", fmt.Errorf("failed to create report file: %w", err)
+	}
+	defer reportFile.Close()
+	fmt.Fprintf(reportFile, "For %s\n", date.Format("2006-01-02"))
+
+	dailyStatistics, err := self.DayStatistics(date)
+	if err != nil {
+		return "", fmt.Errorf("failed to get daily statistics: %w", err)
+	}
+	printDayStatistics(reportFile, dailyStatistics)
+	fmt.Fprintln(reportFile)
+	weeklyStatistics, err := self.WeeklyStatistics(date)
+	if err != nil {
+		return "", fmt.Errorf("failed to get weekly statistics: %w", err)
+	}
+	printWeeklyStatistics(reportFile, weeklyStatistics)
+	fmt.Fprintln(reportFile)
+	monthlyStatistics, err := self.MonthlyStatistics(date)
+	if err != nil {
+		return "", fmt.Errorf("failed to get monthly statistics: %w", err)
+	}
+	printMonthly(reportFile, monthlyStatistics)
+
+	return FilePath(reportFile.Name()), nil
 }

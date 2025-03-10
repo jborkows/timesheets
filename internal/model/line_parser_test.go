@@ -129,6 +129,18 @@ func TestShouldAllowHourWithMinutes(t *testing.T) {
 	assert.Equal(t, uint8(30), valued.Minutes)
 }
 
+func TestShouldAllowHourWithMinutesButTheyShouldNotGoToDescription(t *testing.T) {
+	t.Parallel()
+
+	parser := workingDayParser()
+	timesheet, err := parser.ParseLine(aDate())("Category 1h30m description")
+	if err != nil {
+		t.Fatalf("Error parsing line: %v", err)
+	}
+	valued := timesheet.(*model.TimesheetEntry)
+	assert.Equal(t, "description", valued.Comment)
+}
+
 func TestShouldParseTextWithDecimalAboveTwoPlaces(t *testing.T) {
 	t.Parallel()
 

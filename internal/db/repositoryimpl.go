@@ -193,7 +193,7 @@ func (self *impl) Weekly(ctx context.Context, knowsAboutWeek model.KnowsAboutWee
 		return nil, fmt.Errorf("failed to find statistics: %w for %v", err, knowsAboutWeek)
 	}
 
-	result := groupData[WeeklyReportDatum, model.WeeklyStatistic](structDataParams[WeeklyReportDatum, model.WeeklyStatistic]{
+	result := groupData(structDataParams[WeeklyReportDatum, model.WeeklyStatistic]{
 		self: self,
 		data: values,
 		toSelect: func(entry WeeklyReportDatum) selectOutput {
@@ -206,8 +206,9 @@ func (self *impl) Weekly(ctx context.Context, knowsAboutWeek model.KnowsAboutWee
 		},
 		toModel: func(entry *dirtyWithData) model.WeeklyStatistic {
 			return model.WeeklyStatistic{
-				Dirty:  entry.Dirty,
-				Weekly: entry.Data,
+				Category: entry.Data.Category,
+				Dirty:    entry.Dirty,
+				Weekly:   entry.Data,
 			}
 		},
 	})
@@ -221,7 +222,7 @@ func (self *impl) Monthly(ctx context.Context, knowsAboutMonth model.KnowsAboutM
 	if err != nil {
 		return nil, fmt.Errorf("failed to find statistics: %w", err)
 	}
-	result := groupData[MonthlyReportDatum, model.MonthlyStatistic](structDataParams[MonthlyReportDatum, model.MonthlyStatistic]{
+	result := groupData(structDataParams[MonthlyReportDatum, model.MonthlyStatistic]{
 		self: self,
 		data: values,
 		toSelect: func(entry MonthlyReportDatum) selectOutput {
@@ -234,8 +235,9 @@ func (self *impl) Monthly(ctx context.Context, knowsAboutMonth model.KnowsAboutM
 		},
 		toModel: func(entry *dirtyWithData) model.MonthlyStatistic {
 			return model.MonthlyStatistic{
-				Dirty:   entry.Dirty,
-				Monthly: entry.Data,
+				Category: entry.Data.Category,
+				Dirty:    entry.Dirty,
+				Monthly:  entry.Data,
 			}
 		},
 	})

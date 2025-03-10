@@ -191,6 +191,7 @@ func (analyzer *tokenAnalyzer) analizeHours(t token) error {
 					return invalidTime()
 				}
 			}
+			analyzer.resetTemp()
 			analyzer.state = StateTask
 			return nil
 		}

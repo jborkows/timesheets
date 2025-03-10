@@ -22,7 +22,7 @@ func TestShowDailyStatistics(t *testing.T) {
 		_, _ = service.ProcessForSave(`aaa 1.0 first
 bbb 2.0 description
 ccc 1.5 Task-123 some other 
-aaa 1h30m  second
+aaa 1h30m second
 aaa 1h45m third`, date)
 		_, _ = service.ProcessForSave(`aaa 1.0 first`, date.AddDate(0, 0, 1))
 		_, _ = service.ProcessForSave(`aaa 1.0 first`, date.AddDate(0, 0, 8))
@@ -37,7 +37,7 @@ aaa 1h45m third`, date)
 		log.Printf("Report content: %s", content)
 		desiredContent := `For 2025-03-06
 Daily statistics
-aaa 3:45
+aaa 4:15
 1.0 first
 1.5 second
 1.75 third
@@ -47,12 +47,12 @@ ccc 1:30
 1.5 Task-123 some other
 
 Weekly statistics
-aaa 4.75
+aaa 5.25
 bbb 2.0
 ccc 1.5
 
 Monthly statistics
-aaa 5.75
+aaa 6.25
 bbb 2.0
 ccc 1.5
 `
