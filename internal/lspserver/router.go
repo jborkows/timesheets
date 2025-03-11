@@ -85,6 +85,16 @@ func (self *Controller) route(method string, contents []byte) (any, error) {
 			return nil, fmt.Errorf("Error getting hover: %w", err)
 		}
 		return nil, nil
+	case "textDocument/definition":
+		var request messages.DefinitionRequest
+		if err := json.Unmarshal(contents, &request); err != nil {
+			return nil, err
+		}
+		err := self.Definition(&request)
+		if err != nil {
+			return nil, fmt.Errorf("Error getting definition: %w", err)
+		}
+		return nil, nil
 	default:
 		return nil, nil
 	}

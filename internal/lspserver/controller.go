@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/url"
 	"strings"
 	"time"
 
@@ -164,6 +165,31 @@ func (self *Controller) Hover(request *messages.HoverRequest) error {
 	}
 
 	return self.writeResponse(msg)
+}
+
+func (self *Controller) Definition(request *messages.DefinitionRequest) error {
+	date, err := self.service.ParseDateFromName(request.Params.TextDocument.URI)
+	if err != nil {
+		return fmt.Errorf("Error getting date from file: %s for %s", err, request.Params.TextDocument.URI)
+	}
+	output, err := self.service.ShowDailyStatistics(date)
+	if err != nil {
+		return fmt.Errorf("Error getting statistics for file: %s for %s", err, request.Params.TextDocument.URI)
+	}
+
+	uri := url.URL{Scheme: "file", Path: string(output)}
+	msg := messages.DefinitionResponse{
+		Response: response(request.Request),
+		Result: &messages.Location{
+			URI: uri.String(),
+			Range: messages.Range{
+				Start: messages.Position{Line: 0, Character: 0},
+				End:   messages.Position{Line: 0, Character: 0},
+			},
+		},
+	}
+	return self.writeResponse(msg)
+
 }
 
 func (self *Controller) writeResponse(msg any) error {
