@@ -48,6 +48,7 @@ func (self *Controller) route(method string, contents []byte) (any, error) {
 		if err := json.Unmarshal(contents, &request); err != nil {
 			return nil, err
 		}
+		self.onOpen(&request)
 		return nil, nil
 	case "textDocument/didChange":
 		var request messages.TextDocumentDidChangeNotification
@@ -93,6 +94,16 @@ func (self *Controller) route(method string, contents []byte) (any, error) {
 		err := self.Definition(&request)
 		if err != nil {
 			return nil, fmt.Errorf("Error getting definition: %w", err)
+		}
+		return nil, nil
+	case "textDocument/formatting":
+		var request messages.FormattingRequest
+		if err := json.Unmarshal(contents, &request); err != nil {
+			return nil, err
+		}
+		err := self.Formatting(&request)
+		if err != nil {
+			return nil, fmt.Errorf("Error formatting: %w", err)
 		}
 		return nil, nil
 	default:

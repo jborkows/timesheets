@@ -23,6 +23,7 @@ type Controller struct {
 	didSaveReactor   func(*messages.DidSaveTextDocumentNotification, *Controller)
 	service          *model.Service
 	writer           io.Writer
+	content          *content
 }
 
 func NewController(c *ControllerConfig) *Controller {
@@ -32,14 +33,18 @@ func NewController(c *ControllerConfig) *Controller {
 		writer:           c.Writer,
 		didChangeReactor: model.Debounce2(reactOnChange, time.Duration(1)*time.Second),
 		didSaveReactor:   model.Debounce2(reactOnSave, time.Duration(1)*time.Second),
+		content:          newContent(),
 	}
 }
 
 func (self *Controller) onChange(msg *messages.TextDocumentDidChangeNotification) {
+	text := msg.Params.ContentChanges[0].Text
+	self.content.put(msg.Params.TextDocument.URI, strings.Split(text, "\n"))
 	self.didChangeReactor(msg, self)
 }
 
 func (self *Controller) onSave(msg *messages.DidSaveTextDocumentNotification) {
+	self.changeContent(msg.Params.TextDocument)
 	self.didSaveReactor(msg, self)
 }
 
@@ -63,6 +68,14 @@ func reactOnSave(msg *messages.DidSaveTextDocumentNotification, c *Controller) {
 	_, errors := c.service.ProcessForSave(text, date)
 	c.notifyAboutErrors(errors, msg.Params.TextDocument.URI)
 	log.Println("Received didSave notification: ", msg.Params.TextDocument.URI)
+}
+
+func (self *Controller) onOpen(msg *messages.DidOpenTextDocumentNotification) {
+	self.changeContent(msg.Params.TextDocument)
+}
+
+func (self *Controller) changeContent(textDocument messages.TextDocumentItem) {
+	self.content.put(textDocument.URI, strings.Split(textDocument.Text, "\n"))
 }
 
 func (self *Controller) notifyAboutErrors(params []model.LineError, uri string) {

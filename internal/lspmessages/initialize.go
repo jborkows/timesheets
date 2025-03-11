@@ -41,13 +41,14 @@ type TextDocumentSyncOptions struct {
 }
 
 type ServerCapabilities struct {
-	TextDocumentSync   TextDocumentSyncOptions          `json:"textDocumentSync"`
-	HoverProvider      bool                             `json:"hoverProvider"`
-	DefinitionProvider bool                             `json:"definitionProvider"`
-	CodeActionProvider bool                             `json:"codeActionProvider"`
-	CompletionProvider map[string]any                   `json:"completionProvider"`
-	ExecuteCommand     ExecuteCommandClientCapabilities `json:"executeCommand"`
-	ColorProvider      bool                             `json:"colorProvider"`
+	TextDocumentSync           TextDocumentSyncOptions          `json:"textDocumentSync"`
+	HoverProvider              bool                             `json:"hoverProvider"`
+	DefinitionProvider         bool                             `json:"definitionProvider"`
+	CodeActionProvider         bool                             `json:"codeActionProvider"`
+	CompletionProvider         map[string]any                   `json:"completionProvider"`
+	ExecuteCommand             ExecuteCommandClientCapabilities `json:"executeCommand"`
+	ColorProvider              bool                             `json:"colorProvider"`
+	DocumentFormattingProvider bool                             `json:"documentFormattingProvider"`
 }
 
 type ServerInfo struct {
@@ -65,8 +66,9 @@ func NewInitializeResponse(response Response) InitializeResponse {
 					Change:    1,
 					Save:      SaveOptions{IncludeText: true},
 				},
-				HoverProvider:      true,
-				DefinitionProvider: true,
+				HoverProvider:              true,
+				DefinitionProvider:         true,
+				DocumentFormattingProvider: true,
 				// CodeActionProvider: true,
 				// ColorProvider:      false,
 				CompletionProvider: map[string]any{},
