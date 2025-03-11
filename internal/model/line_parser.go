@@ -85,6 +85,12 @@ func (analyzer *tokenAnalyzer) finish() (*TimesheetEntry, error) {
 		} else {
 			return nil, ErrInvalidCategory
 		}
+	case StateHours:
+		err := analyzer.analizeHours(&space{})
+		if err != nil {
+			return nil, err
+		}
+		return analyzer.entry, nil
 	}
 	var commentBuilder strings.Builder
 	for _, t := range analyzer.tokens {

@@ -73,6 +73,21 @@ func TestOnlyWrongCategory(t *testing.T) {
 	assert.Equal(t, model.ErrInvalidCategory, err)
 }
 
+func TestValidHourShouldNoBeReportedAsBothZeros(t *testing.T) {
+	t.Parallel()
+
+	parser := workingDayParser()
+	entry, err := parser.ParseLine(aDate())("Category 1.0")
+	if err != nil {
+		t.Fatalf("Error parsing line: %v", err)
+	}
+	time, ok := entry.(*model.TimesheetEntry)
+	if !ok {
+		t.Fatalf("Expected TimesheetEntry, got %T", entry)
+	}
+	assert.Equal(t, uint8(1), time.Hours)
+}
+
 func TestShouldParseTextWithDecimalTwoPlacesTime(t *testing.T) {
 	t.Parallel()
 
