@@ -11,7 +11,6 @@ import (
 )
 
 func TestShowDailyStatistics(t *testing.T) {
-	t.Parallel()
 	config := model.NewConfig([]string{"aaa", "bbb", "ccc"}, "Task-")
 	date, err := time.Parse("2006-01-02", "2025-03-06")
 	if err != nil {
@@ -61,7 +60,6 @@ ccc 1.5
 }
 
 func TestReportFileShouldBeReused(t *testing.T) {
-	t.Parallel()
 	config := model.NewConfig([]string{"aaa"}, "Task-")
 	date, err := time.Parse("2006-01-02", "2025-03-06")
 	if err != nil {
