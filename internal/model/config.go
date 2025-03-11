@@ -126,5 +126,5 @@ func (config *Config) IsTask(text string) bool {
 	return true
 }
 
-const Version = "0.0.2"
+const Version = "1.0"
 const TimeSheetExtension = ".tsf"
