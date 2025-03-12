@@ -106,6 +106,7 @@ func tokenizeFromIndex(input string, j int) []Token {
 	tokens := make([]Token, 0, len(words))
 	index := j // Start index tracking from j
 
+	//Chats code... does not include multiple spaces in the token
 	for _, word := range words {
 		tokens = append(tokens, Token{Index: index, Word: word})
 		index += len(word) + 1 // Move index past word and space
@@ -207,7 +208,6 @@ func (self *Controller) SemanticTokens(request *messages.SemanticTokensRequest) 
 
 	}
 	if len(tokens) == 0 {
-
 		msg := messages.SemanticTokenResponse{
 			Response: response(request.Request),
 			Result: &messages.SemanticTokens{
@@ -222,7 +222,11 @@ func (self *Controller) SemanticTokens(request *messages.SemanticTokensRequest) 
 		prev := tokens[i-1]
 		current := tokens[i]
 		tokensToSend = append(tokensToSend, current.line-prev.line)
-		tokensToSend = append(tokensToSend, current.column-prev.column)
+		if current.line-prev.line == 0 {
+			tokensToSend = append(tokensToSend, current.column-prev.column)
+		} else {
+			tokensToSend = append(tokensToSend, current.column)
+		}
 		tokensToSend = append(tokensToSend, current.length)
 		tokensToSend = append(tokensToSend, current.typeLegend)
 		tokensToSend = append(tokensToSend, 0)

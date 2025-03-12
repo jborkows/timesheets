@@ -15,5 +15,6 @@ type SemanticTokenResponse struct {
 }
 
 type SemanticTokens struct {
-	Data []int `json:"data"`
+	Data     []int  `json:"data"`
+	ResultId string `json:"resultId"`
 }
