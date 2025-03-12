@@ -106,6 +106,17 @@ func (self *Controller) route(method string, contents []byte) (any, error) {
 			return nil, fmt.Errorf("Error formatting: %w", err)
 		}
 		return nil, nil
+	case "textDocument/semanticTokens/full":
+		var request messages.SemanticTokensRequest
+		if err := json.Unmarshal(contents, &request); err != nil {
+			return nil, err
+		}
+		log.Printf("Got semantic tokens request for %s", request.Params.TextDocument.URI)
+		err := self.SemanticTokens(&request)
+		if err != nil {
+			return nil, fmt.Errorf("Error getting semantic tokens: %w", err)
+		}
+		return nil, nil
 	default:
 		return nil, nil
 	}

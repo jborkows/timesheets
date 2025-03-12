@@ -49,6 +49,18 @@ type ServerCapabilities struct {
 	ExecuteCommand             ExecuteCommandClientCapabilities `json:"executeCommand"`
 	ColorProvider              bool                             `json:"colorProvider"`
 	DocumentFormattingProvider bool                             `json:"documentFormattingProvider"`
+	SemanticTokensProvider     SemanticTokensOptions            `json:"semanticTokensProvider"`
+}
+
+type SemanticTokensOptions struct {
+	Legend SemanticTokensLegend `json:"legend"`
+	Range  bool                 `json:"range"`
+	Full   bool                 `json:"full"`
+}
+
+type SemanticTokensLegend struct {
+	TokenTypes     []string `json:"tokenTypes"`
+	TokenModifiers []string `json:"tokenModifiers"`
 }
 
 type ServerInfo struct {
@@ -70,8 +82,17 @@ func NewInitializeResponse(response Response) InitializeResponse {
 				DefinitionProvider:         true,
 				DocumentFormattingProvider: true,
 				// CodeActionProvider: true,
-				// ColorProvider:      false,
+				// ColorProvider:      true,
 				CompletionProvider: map[string]any{},
+				SemanticTokensProvider: SemanticTokensOptions{
+					Legend: SemanticTokensLegend{
+						TokenTypes:     []string{"class", "property", "string", "comment"},
+						TokenModifiers: []string{},
+					},
+					Range: false,
+					Full:  true,
+				},
+
 				// ExecuteCommand: ExecuteCommandClientCapabilities{
 				// 	Commands: []string{"some_command"},
 				// },

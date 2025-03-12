@@ -63,8 +63,30 @@ func (w WriteMode) String() string {
 func (self *Service) ProcessForSave(text string, date time.Time) ([]WorkItem, []LineError) {
 	return self.process(text, date, SAVE)
 }
+
 func (self *Service) ProcessForDraft(text string, date time.Time) ([]WorkItem, []LineError) {
 	return self.process(text, date, DRAFT)
+}
+
+func (self *Service) ParseLine(line string, date time.Time) WorkItem {
+	dateInfo := DateInfoFrom(date)
+	parseLine := self.parser.ParseLine(dateInfo)
+	workItem, err := parseLine(line)
+	if err != nil {
+		return nil
+	}
+	switch e := workItem.(type) {
+	case *TimesheetEntry:
+		err := e.Validate()
+		if err != nil {
+			return nil
+		}
+		return e
+	case *Holiday:
+		return e
+	}
+	return nil
+
 }
 
 func (self *Service) process(text string, date time.Time, mode WriteMode) ([]WorkItem, []LineError) {
@@ -309,4 +331,8 @@ func (self *Service) ShowDailyStatistics(date time.Time) (FilePath, error) {
 	printMonthly(reportFile, monthlyStatistics)
 
 	return FilePath(reportFile.Name()), nil
+}
+
+func (self *Service) ValidCategory(category string) bool {
+	return self.config.IsCategory(category)
 }
