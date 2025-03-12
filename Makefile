@@ -1,4 +1,4 @@
-.PHONY: run tests tests-json failed-tests create_test_project migrate short-tests short-tests-details generate create_test_project
+.PHONY: run tests tests-json failed-tests create_test_project migrate short-tests short-tests-details generate create_test_project tests-coverage
 
 run:
 	@ulimit -n 4096
@@ -8,6 +8,10 @@ build:
 tests: generate
 	@echo "Running tests..."
 	@go test ./... -v -race -shuffle=on 
+
+tests-coverage: generate
+	@echo "Running tests..."
+	@go test ./... -v -race -shuffle=on -coverprofile=coverage.out
 	
 short-tests-details: 
 	@echo "Running tests..."
