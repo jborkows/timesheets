@@ -84,3 +84,5 @@ func (w *Month) String() string {
 func (w *Month) DaysInMonth() int8 {
 	return int8(time.Time(w.EndDate).Day() - time.Time(w.BeginDate).Day())
 }
+
+type Line = string

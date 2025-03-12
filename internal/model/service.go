@@ -336,3 +336,72 @@ func (self *Service) ShowDailyStatistics(date time.Time) (FilePath, error) {
 func (self *Service) ValidCategory(category string) bool {
 	return self.config.IsCategory(category)
 }
+
+func (self *Service) SemanaticTokenFrom(content []Line, date time.Time) []TokenReady {
+	if len(content) < 1 {
+		return []TokenReady{}
+	}
+
+	var tokens []TokenReady
+	for i, line := range content {
+		parsed := self.ParseLine(line, date)
+		if parsed == nil {
+			continue
+		}
+		switch e := parsed.(type) {
+		case *TimesheetEntry:
+			err := e.Validate()
+			if err != nil {
+				return nil
+			}
+			tokens = append(tokens, TokenReady{
+				Line:   i,
+				Column: 0,
+				Length: len(e.Category),
+				Type:   ClassType,
+			})
+			startOfTime := 0
+
+			for index, char := range line {
+				log.Printf("Char: %s %d\n", string(char), index)
+			}
+			log.Printf("After category: '%s', %d", line[len(e.Category):], len(e.Category))
+			j := len(e.Category)
+			for ; j < len(line); j++ {
+				if line[j] != ' ' && startOfTime == 0 {
+					startOfTime = j
+					continue
+				}
+				if line[j] == ' ' && startOfTime > 0 {
+					log.Printf("Time: '%s'  -> %d %d %d", line[startOfTime:j], startOfTime, j, j-startOfTime)
+					tokens = append(tokens, TokenReady{
+						Line:   i,
+						Column: startOfTime,
+						Length: j - startOfTime,
+						Type:   PropertyType,
+					})
+					break
+				}
+			}
+			words := tokenizeFromIndex(line, j)
+			for _, tocken := range words {
+				tokens = append(tokens, TokenReady{
+					Line:   i,
+					Column: tocken.Index + 1,
+					Length: len(tocken.Word),
+					Type:   StringType,
+				})
+				log.Printf("Token %d: %s %d", i, tocken.Word, tocken.Index+1)
+			}
+
+		default:
+			continue
+		}
+
+	}
+	if len(tokens) == 0 {
+		return []TokenReady{}
+	} else {
+		return tokens
+	}
+}

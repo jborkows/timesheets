@@ -86,7 +86,7 @@ func NewInitializeResponse(response Response) InitializeResponse {
 				CompletionProvider: map[string]any{},
 				SemanticTokensProvider: SemanticTokensOptions{
 					Legend: SemanticTokensLegend{
-						TokenTypes:     []string{"class", "property", "string", "comment"},
+						TokenTypes:     model.Map(model.SemanticTypes(), model.SemantincTypeAsString),
 						TokenModifiers: []string{},
 					},
 					Range: false,
