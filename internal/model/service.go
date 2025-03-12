@@ -383,15 +383,15 @@ func (self *Service) SemanaticTokenFrom(content []Line, date time.Time) []TokenR
 					break
 				}
 			}
-			words := tokenizeFromIndex(line, j)
+			words := TokenizeFromIndex(line, j)
 			for _, tocken := range words {
 				tokens = append(tokens, TokenReady{
 					Line:   i,
-					Column: tocken.Index + 1,
+					Column: tocken.Index,
 					Length: len(tocken.Word),
 					Type:   StringType,
 				})
-				log.Printf("Token %d: %s %d", i, tocken.Word, tocken.Index+1)
+				log.Printf("Token %d: %s %d", i, tocken.Word, tocken.Index)
 			}
 
 		default:

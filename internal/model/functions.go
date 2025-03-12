@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"time"
 )
 
@@ -97,26 +96,31 @@ type Token struct {
 	Word  string
 }
 
-func tokenizeFromIndex(input string, j int) []Token {
+func TokenizeFromIndex(input string, j int) []Token {
 	// Ensure j is within bounds
 	if j < 0 || j >= len(input) {
 		return nil
 	}
 
-	// Get substring from index j
 	substr := input[j:]
 
-	// Split by spaces
-	words := strings.Fields(substr)
-
-	// Prepare tokens
-	tokens := make([]Token, 0, len(words))
-	index := j // Start index tracking from j
-
-	//Chats code... does not include multiple spaces in the token
-	for _, word := range words {
-		tokens = append(tokens, Token{Index: index, Word: word})
-		index += len(word) + 1 // Move index past word and space
+	var tokens []Token
+	var temp Token = Token{}
+	for i, r := range substr {
+		if r == ' ' {
+			if temp.Word != "" {
+				tokens = append(tokens, temp)
+				temp = Token{}
+			}
+		} else {
+			if temp.Word == "" {
+				temp.Index = i + j
+			}
+			temp.Word += string(r)
+		}
+	}
+	if temp.Word != "" {
+		tokens = append(tokens, temp)
 	}
 
 	return tokens
