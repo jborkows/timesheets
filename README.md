@@ -1,6 +1,7 @@
 # TLDR
 LSP server/client for time sheet management.
 Each day is new file.
+Inspired by [lsp video](https://www.youtube.com/watch?v=YsdlcQoHqPY&t=6296s&pp=ygUDbHNw).
 
 # Using:
 - [x] [LSP](https://microsoft.github.io/language-server-protocol/)
@@ -19,4 +20,6 @@ Use
 ```
 make create_test_project
 ```
-which create and open example project in nvim.
+which create and open example project in [neovim](https://neovim.io/)
+
+
