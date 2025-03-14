@@ -35,22 +35,29 @@ aaa 1h45m third`, date)
 		}
 		log.Printf("Report content: %s", content)
 		desiredContent := `For 2025-03-06
-Daily statistics
+Daily statistics (7:45)
+
 aaa 4:15
 1.0 first
 1.5 second
 1.75 third
+
 bbb 2:00
 2.0 description
+
 ccc 1:30
 1.5 Task-123 some other
 
-Weekly statistics
+####################
+
+Weekly statistics (8:45)
 aaa 5.25
 bbb 2.0
 ccc 1.5
 
-Monthly statistics
+####################
+
+Monthly statistics (9:45)
 aaa 6.25
 bbb 2.0
 ccc 1.5
@@ -83,14 +90,19 @@ func TestReportFileShouldBeReused(t *testing.T) {
 		}
 		log.Printf("Report content: %s", content)
 		desiredContent := `For 2025-03-06
-Daily statistics
+Daily statistics (1:00)
+
 aaa 1:00
 1.0 first
 
-Weekly statistics
+####################
+
+Weekly statistics (2:00)
 aaa 2.0
 
-Monthly statistics
+####################
+
+Monthly statistics (2:00)
 aaa 2.0
 `
 		assert.Equal(t, desiredContent, string(content))

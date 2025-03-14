@@ -218,7 +218,6 @@ func (self *Service) MonthlyStatistics(date time.Time) ([]MonthlyStatistic, erro
 type FilePath string
 
 func printDayStatistics(reportFile *os.File, dayEntries []DayEntry) {
-	fmt.Fprintln(reportFile, "Daily statistics")
 	var categoryFiles map[string][]DayEntry = make(map[string][]DayEntry)
 	for _, entry := range dayEntries {
 		if _, ok := categoryFiles[entry.Category]; !ok {
@@ -234,6 +233,18 @@ func printDayStatistics(reportFile *os.File, dayEntries []DayEntry) {
 		categories = append(categories, category)
 	}
 	sort.Strings(categories)
+
+	dailyHours := 0
+	dailyMinutes := 0
+	for _, category := range categories {
+		entries := categoryFiles[category]
+		for _, entry := range entries {
+			dailyHours += int(entry.Hours)
+			dailyMinutes += int(entry.Minutes)
+		}
+	}
+	fmt.Fprintf(reportFile, "Daily statistics (%d:%02d)\n", dailyHours+dailyMinutes/60, dailyMinutes%60)
+	fmt.Fprintln(reportFile)
 	for _, category := range categories {
 		entries := categoryFiles[category]
 		sumHours := 0
@@ -257,6 +268,7 @@ func printDayStatistics(reportFile *os.File, dayEntries []DayEntry) {
 				fmt.Fprintf(reportFile, "%d.%d %s\n", entry.Hours, entry.Minutes*10/6, description.String())
 			}
 		}
+		fmt.Fprintln(reportFile)
 	}
 }
 
@@ -270,7 +282,14 @@ func printMinutesAsDecimal(minutes uint8) string {
 }
 
 func printWeeklyStatistics(reportFile *os.File, weeklyStatistics []WeeklyStatistic) {
-	fmt.Fprintln(reportFile, "Weekly statistics")
+
+	sumHours := 0
+	sumMinutes := 0
+	for _, entry := range weeklyStatistics {
+		sumHours += int(entry.Weekly.Hours)
+		sumMinutes += int(entry.Weekly.Minutes)
+	}
+	fmt.Fprintf(reportFile, "Weekly statistics (%d:%02d)\n", sumHours+sumMinutes/60, sumMinutes%60)
 	sort.Slice(weeklyStatistics, func(i, j int) bool {
 		return weeklyStatistics[i].Category < weeklyStatistics[j].Category
 	})
@@ -281,7 +300,13 @@ func printWeeklyStatistics(reportFile *os.File, weeklyStatistics []WeeklyStatist
 }
 
 func printMonthly(reportFile *os.File, statistics []MonthlyStatistic) {
-	fmt.Fprintln(reportFile, "Monthly statistics")
+	sumHours := 0
+	sumMinutes := 0
+	for _, entry := range statistics {
+		sumHours += int(entry.Monthly.Hours)
+		sumMinutes += int(entry.Monthly.Minutes)
+	}
+	fmt.Fprintf(reportFile, "Monthly statistics (%d:%02d)\n", sumHours+sumMinutes/60, sumMinutes%60)
 	sort.Slice(statistics, func(i, j int) bool {
 		return statistics[i].Category < statistics[j].Category
 	})
@@ -317,12 +342,15 @@ func (self *Service) ShowDailyStatistics(date time.Time) (FilePath, error) {
 		return "", fmt.Errorf("failed to get daily statistics: %w", err)
 	}
 	printDayStatistics(reportFile, dailyStatistics)
+	fmt.Fprintln(reportFile, "####################")
 	fmt.Fprintln(reportFile)
 	weeklyStatistics, err := self.WeeklyStatistics(date)
 	if err != nil {
 		return "", fmt.Errorf("failed to get weekly statistics: %w", err)
 	}
 	printWeeklyStatistics(reportFile, weeklyStatistics)
+	fmt.Fprintln(reportFile)
+	fmt.Fprintln(reportFile, "####################")
 	fmt.Fprintln(reportFile)
 	monthlyStatistics, err := self.MonthlyStatistics(date)
 	if err != nil {
