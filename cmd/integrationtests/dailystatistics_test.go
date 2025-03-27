@@ -57,7 +57,7 @@ ccc 1.5
 
 ####################
 
-Monthly statistics (9:45)
+Monthly statistics (9:45/24)
 aaa 6.25
 bbb 2.0
 ccc 1.5
@@ -102,7 +102,7 @@ aaa 2.0
 
 ####################
 
-Monthly statistics (2:00)
+Monthly statistics (2:00/16)
 aaa 2.0
 `
 		assert.Equal(t, desiredContent, string(content))

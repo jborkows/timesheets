@@ -13,6 +13,12 @@ type DailyReportDatum struct {
 	Minutes  int64
 }
 
+type MonthlyOngoingReportDatum struct {
+	Month       interface{}
+	Pending     bool
+	CountedDays int64
+}
+
 type MonthlyReportDatum struct {
 	Month    interface{}
 	Pending  bool

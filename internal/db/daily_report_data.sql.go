@@ -9,6 +9,22 @@ import (
 	"context"
 )
 
+const findMonthlyOngoingStatistics = `-- name: FindMonthlyOngoingStatistics :one
+select counted_days from monthly_ongoing_report_data where month = ?1 and pending = ?2
+`
+
+type FindMonthlyOngoingStatisticsParams struct {
+	Date    interface{}
+	Pending bool
+}
+
+func (q *Queries) FindMonthlyOngoingStatistics(ctx context.Context, arg FindMonthlyOngoingStatisticsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, findMonthlyOngoingStatistics, arg.Date, arg.Pending)
+	var counted_days int64
+	err := row.Scan(&counted_days)
+	return counted_days, err
+}
+
 const findMonthlyStatistics = `-- name: FindMonthlyStatistics :many
 select month, pending, category, holiday, hours, minutes from monthly_report_data where month = ?1
 `

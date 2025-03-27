@@ -215,6 +215,12 @@ func (self *Service) MonthlyStatistics(date time.Time) ([]MonthlyStatistic, erro
 	})
 }
 
+func (self *Service) MonthlyOngoingStatistics(date time.Time) (TotalHours, error) {
+	return statistics(self, date, func(ctx context.Context, queryer Queryer, date time.Time) (TotalHours, error) {
+		return queryer.MonthlyOngoing(ctx, TimesheetForDate(date))
+	})
+}
+
 type FilePath string
 
 func printDayStatistics(reportFile *os.File, dayEntries []DayEntry) {
@@ -299,14 +305,14 @@ func printWeeklyStatistics(reportFile *os.File, weeklyStatistics []WeeklyStatist
 	}
 }
 
-func printMonthly(reportFile *os.File, statistics []MonthlyStatistic) {
+func printMonthly(reportFile *os.File, statistics []MonthlyStatistic, hours TotalHours) {
 	sumHours := 0
 	sumMinutes := 0
 	for _, entry := range statistics {
 		sumHours += int(entry.Monthly.Hours)
 		sumMinutes += int(entry.Monthly.Minutes)
 	}
-	fmt.Fprintf(reportFile, "Monthly statistics (%d:%02d)\n", sumHours+sumMinutes/60, sumMinutes%60)
+	fmt.Fprintf(reportFile, "Monthly statistics (%d:%02d/%d)\n", sumHours+sumMinutes/60, sumMinutes%60, hours)
 	sort.Slice(statistics, func(i, j int) bool {
 		return statistics[i].Category < statistics[j].Category
 	})
@@ -356,7 +362,12 @@ func (self *Service) ShowDailyStatistics(date time.Time) (FilePath, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to get monthly statistics: %w", err)
 	}
-	printMonthly(reportFile, monthlyStatistics)
+	hours, err := self.MonthlyOngoingStatistics(date)
+	if err != nil {
+		return "", fmt.Errorf("failed to get monthly ongoing statistics: %w", err)
+	}
+
+	printMonthly(reportFile, monthlyStatistics, hours)
 
 	return FilePath(reportFile.Name()), nil
 }

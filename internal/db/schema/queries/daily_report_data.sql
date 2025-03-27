@@ -7,3 +7,7 @@ select * from monthly_report_data where month = :date;
 
 -- name: FindWeeklyStatistics :many
 select * from weekly_report_data where week_begin_date = :start_date and week_end_date = :end_date;
+
+-- name: FindMonthlyOngoingStatistics :one
+select counted_days from monthly_ongoing_report_data where month = :date and pending = :pending;
+

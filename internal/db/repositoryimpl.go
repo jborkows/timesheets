@@ -244,6 +244,20 @@ func (self *impl) Monthly(ctx context.Context, knowsAboutMonth model.KnowsAboutM
 	return result, nil
 }
 
+func (self *impl) MonthlyOngoing(ctx context.Context, knowsAboutMonth model.KnowsAboutMonth) (model.TotalHours, error) {
+	month := knowsAboutMonth.Month()
+	counted_days, err := self.queries.FindMonthlyOngoingStatistics(ctx, FindMonthlyOngoingStatisticsParams{
+
+		Date:    dayAsInteger(&month.BeginDate) / 100,
+		Pending: false,
+	})
+
+	if err != nil {
+		return 0, fmt.Errorf("failed to find statistics: %w", err)
+	}
+	return model.TotalHours(uint16(counted_days) * 8), nil
+}
+
 func (self *impl) DaySummary(ctx context.Context, dateKnower model.KnowsAboutDate) ([]model.DayEntry, error) {
 	day := dateKnower.Day()
 	values, err := self.queries.TimesheetForDay(context.TODO(), dayAsInteger(day))

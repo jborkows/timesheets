@@ -34,8 +34,11 @@ type Queryer interface {
 	Daily(ctx context.Context, knowsAboutDate KnowsAboutDate) ([]DailyStatistic, error)
 	Weekly(ctx context.Context, knowsAboutWeek KnowsAboutWeek) ([]WeeklyStatistic, error)
 	Monthly(ctx context.Context, knowsAboutMonth KnowsAboutMonth) ([]MonthlyStatistic, error)
+	MonthlyOngoing(ctx context.Context, knowsAboutMonth KnowsAboutMonth) (TotalHours, error)
 	DaySummary(ctx context.Context, knowsAboutDate KnowsAboutDate) ([]DayEntry, error)
 }
+
+type TotalHours uint16
 
 type Repository interface {
 	Transactional(ctx context.Context, operation func(context.Context, Saver, Queryer) error) error
