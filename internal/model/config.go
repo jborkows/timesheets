@@ -110,6 +110,23 @@ func (config *Config) PossibleCategories() []string {
 	return append(config.Categories.Regular, config.Categories.Overtime...)
 }
 
+func (config *Config) RegularCategories() []string {
+	return obtainCategories(config.Categories.Regular)
+}
+
+func (config *Config) OvertimeCategories() []string {
+	return obtainCategories(config.Categories.Overtime)
+}
+
+func obtainCategories(inCategories []string) []string {
+	if len(inCategories) == 0 {
+		return nil
+	}
+	categories := make([]string, len(inCategories))
+	copy(categories, inCategories)
+	return categories
+}
+
 func (config *Config) IsTask(text string) bool {
 	if !(strings.HasPrefix(text, config.Tasks.Prefix)) {
 		return false

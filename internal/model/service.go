@@ -211,7 +211,13 @@ func (self *Service) WeeklyStatistics(date time.Time) ([]WeeklyStatistic, error)
 
 func (self *Service) MonthlyStatistics(date time.Time) ([]MonthlyStatistic, error) {
 	return statistics(self, date, func(ctx context.Context, queryer Queryer, date time.Time) ([]MonthlyStatistic, error) {
-		return queryer.Monthly(ctx, TimesheetForDate(date))
+		return queryer.MonthlyPerCategories(ctx, self.config.RegularCategories(), TimesheetForDate(date))
+	})
+}
+
+func (self *Service) MonthlyOvertimeStatistics(date time.Time) ([]MonthlyStatistic, error) {
+	return statistics(self, date, func(ctx context.Context, queryer Queryer, date time.Time) ([]MonthlyStatistic, error) {
+		return queryer.MonthlyPerCategories(ctx, self.config.OvertimeCategories(), TimesheetForDate(date))
 	})
 }
 
@@ -323,6 +329,24 @@ func printMonthly(reportFile *os.File, statistics []MonthlyStatistic, hours Tota
 	}
 }
 
+func printOvertimeMonthly(reportFile *os.File, statistics []MonthlyStatistic) {
+	sumHours := 0
+	sumMinutes := 0
+	for _, entry := range statistics {
+		sumHours += int(entry.Monthly.Hours)
+		sumMinutes += int(entry.Monthly.Minutes)
+	}
+	fmt.Fprintf(reportFile, "Overtime (%d:%02d)\n", sumHours+sumMinutes/60, sumMinutes%60)
+	sort.Slice(statistics, func(i, j int) bool {
+		return statistics[i].Category < statistics[j].Category
+	})
+
+	for _, entry := range statistics {
+		fmt.Fprintf(reportFile, "%s %d.%s\n", entry.Category, int(entry.Monthly.Hours), printMinutesAsDecimal(entry.Monthly.Minutes))
+
+	}
+}
+
 func (self *Service) ShowDailyStatistics(date time.Time) (FilePath, error) {
 
 	fileName := fmt.Sprintf("report-timesheet-%s.txt", date.Format("2006-01-02"))
@@ -368,6 +392,15 @@ func (self *Service) ShowDailyStatistics(date time.Time) (FilePath, error) {
 	}
 
 	printMonthly(reportFile, monthlyStatistics, hours)
+	monthlyStatistics, err = self.MonthlyOvertimeStatistics(date)
+	if err != nil {
+		return "", fmt.Errorf("failed to get monthly overtime statistics: %w", err)
+	}
+	if len(monthlyStatistics) > 0 {
+		fmt.Fprintln(reportFile)
+		printOvertimeMonthly(reportFile, monthlyStatistics)
+
+	}
 
 	return FilePath(reportFile.Name()), nil
 }

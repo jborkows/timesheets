@@ -244,6 +244,35 @@ func (self *impl) Monthly(ctx context.Context, knowsAboutMonth model.KnowsAboutM
 	return result, nil
 }
 
+func (self *impl) MonthlyPerCategories(ctx context.Context, categories []string, knowsAboutMonth model.KnowsAboutMonth) ([]model.MonthlyStatistic, error) {
+	month := knowsAboutMonth.Month()
+	values, err := self.queries.FindMonthlyStatisticsForCategories(context.TODO(), FindMonthlyStatisticsForCategoriesParams{Date: dayAsInteger(&month.BeginDate) / 100, Categories: categories})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to find statistics: %w", err)
+	}
+	result := groupData(structDataParams[MonthlyReportDatum, model.MonthlyStatistic]{
+		self: self,
+		data: values,
+		toSelect: func(entry MonthlyReportDatum) selectOutput {
+			return selectOutput{
+				Category: entry.Category,
+				Hours:    entry.Hours,
+				Minutes:  entry.Minutes,
+				Pending:  entry.Pending,
+			}
+		},
+		toModel: func(entry *dirtyWithData) model.MonthlyStatistic {
+			return model.MonthlyStatistic{
+				Category: entry.Data.Category,
+				Dirty:    entry.Dirty,
+				Monthly:  entry.Data,
+			}
+		},
+	})
+	return result, nil
+}
+
 func (self *impl) MonthlyOngoing(ctx context.Context, knowsAboutMonth model.KnowsAboutMonth) (model.TotalHours, error) {
 	month := knowsAboutMonth.Month()
 	counted_days, err := self.queries.FindMonthlyOngoingStatistics(ctx, FindMonthlyOngoingStatisticsParams{
