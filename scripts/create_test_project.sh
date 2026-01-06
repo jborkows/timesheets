@@ -11,30 +11,26 @@ mkdir -p $test_project_dir
 cat << EOF > ${test_project_dir}/.nvimrc.lua
 vim.filetype.add({
   extension = {
-    tsf = "timesheet"
-  }
-})
-local lspconfig = require("lspconfig")
-
-lspconfig.timesheet_lsp.setup({
-  on_attach = function(client, bufnr)
-  end,
-  root_dir = function(fname)
-    return lspconfig.util.root_pattern(".git")(fname) or vim.fn.getcwd()
-  end,
+    tsf = "timesheet",
+  },
 })
 
-vim.api.nvim_create_autocmd("FileType", {
-  pattern = "timesheet",
-  callback = function()
-    local root_dir = lspconfig.util.root_pattern(".git")(vim.fn.expand("%:p")) or vim.fn.getcwd()
-    vim.lsp.start({
-      name = "timesheet_lsp",
-      cmd = {"$application_exe", "-c", "$test_project_dir/config.toml", "--project-root", root_dir},
-      root_dir = root_dir,
+vim.lsp.config("timesheet_lsp", {
+  cmd = function(dispatchers, config)
+    local root = config.root_dir or vim.fn.getcwd()
+    return vim.lsp.rpc.start({
+      "$application_exe",
+      "-c", root .. "/config.toml",
+      "--project-root", root,
+    }, dispatchers, {
+      cwd = root,
     })
   end,
+  filetypes = { "timesheet" },
+  root_markers = { ".git", "config.toml" },
 })
+
+vim.lsp.enable("timesheet_lsp")
 EOF
 cat << EOF > $test_project_dir/config.toml
 [categories]
