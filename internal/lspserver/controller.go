@@ -44,7 +44,7 @@ func (self *Controller) onChange(msg *messages.TextDocumentDidChangeNotification
 }
 
 func (self *Controller) onSave(msg *messages.DidSaveTextDocumentNotification) {
-	self.changeContent(msg.Params.TextDocument)
+	self.content.put(msg.Params.TextDocument.URI, strings.Split(msg.Params.Text, "\n"))
 	self.didSaveReactor(msg, self)
 }
 
@@ -67,6 +67,7 @@ func reactOnSave(msg *messages.DidSaveTextDocumentNotification, c *Controller) {
 	}
 	_, errors := c.service.ProcessForSave(text, date)
 	c.notifyAboutErrors(errors, msg.Params.TextDocument.URI)
+	c.requestSemanticTokensRefresh()
 	log.Println("Received didSave notification: ", msg.Params.TextDocument.URI)
 }
 
@@ -79,7 +80,7 @@ func (self *Controller) changeContent(textDocument messages.TextDocumentItem) {
 }
 
 func (self *Controller) notifyAboutErrors(params []model.LineError, uri string) {
-	var diagnostics []messages.Diagnostic = []messages.Diagnostic{}
+	var diagnostics = []messages.Diagnostic{}
 	for _, param := range params {
 
 		var errorMessage string
@@ -211,4 +212,20 @@ func (self *Controller) writeResponse(msg any) error {
 	_, err := self.writer.Write([]byte(reply))
 	return err
 
+}
+
+// requestSemanticTokensRefresh sends a workspace/semanticTokens/refresh notification
+// to the client, asking it to re-request semantic tokens for all buffers.
+func (self *Controller) requestSemanticTokensRefresh() {
+	message := messages.SemanticTokensRefreshNotification{
+		Notification: messages.Notification{
+			RPC:    "2.0",
+			Method: "workspace/semanticTokens/refresh",
+		},
+	}
+	log.Println("Requesting semantic tokens refresh")
+	err := self.writeResponse(message)
+	if err != nil {
+		log.Printf("Error requesting semantic tokens refresh: %s", err)
+	}
 }
