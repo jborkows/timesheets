@@ -85,8 +85,6 @@ func (self *impl) saveTimeSheet(ctx context.Context, timesheet *model.Timesheet,
 				Category:      e.Category,
 			}
 			err := self.queries.AddEntry(ctx, savingDate)
-			fmt.Printf("saving entry: %v", savingDate)
-
 			if err != nil {
 				return fmt.Errorf("failed to insert pending: %w", err)
 			}

@@ -64,7 +64,7 @@ func runMigrations(db *sql.DB) error {
 	if err != nil {
 		return fmt.Errorf("Error getting working directory: %w", err)
 	}
-	fmt.Println("Working directory:", wd)
+	log.Println("Working directory:", wd)
 	d, err := iofs.New(migrationFiles, "schema/migrations")
 	if err != nil {
 		log.Fatalf("Failed to initialize migration source: %v", err)
@@ -128,9 +128,9 @@ func RemoveDatabase(filePath string) {
 	cleanup := func() {
 		err := os.Remove(filePath)
 		if err != nil {
-			fmt.Println("Error removing temporary file:", err)
+			log.Println("Error removing temporary file:", err)
 		} else {
-			fmt.Println("Temporary file removed.")
+			log.Println("Temporary file removed.")
 		}
 		removeAdditionalDbFiles(filePath)
 	}
